@@ -83,16 +83,16 @@ Database schema exists, Alembic can run migrations, and you can read/write recor
 **Estimated effort:** 2–3 sessions
 
 ### Tasks
-- [ ] Install **sounddevice** and **soundfile** (Python audio recording libraries)
-- [ ] Write `cli/record.py` — a script that:
+- [X] Install **sounddevice** and **soundfile** (Python audio recording libraries)
+- [X] Write `cli/record.py` — a script that:
   - Starts recording when you press Enter
   - Stops recording when you press Enter again
   - Saves the `.wav` file to `data/audio/` with a timestamped filename
 - [X] Write `services/transcriber.py` — wraps Faster-Whisper:
   - Accepts an audio file path
   - Returns the transcript as a string
-- [ ] Wire them together: recording finishes → transcription runs → transcript printed to console
-- [ ] Save the audio filename and raw transcript to the database via SQLAlchemy
+- [X] Wire them together: recording finishes → transcription runs → transcript printed to console
+- [X] Save the audio filename and raw transcript to the database via SQLAlchemy
 
 ### Tips
 - Start with a hardcoded 30-second max recording to keep things simple
@@ -119,7 +119,7 @@ Run `python cli/record.py`, speak for 30 seconds, and see your words printed to 
 - [X] Write `services/formatter.py` that calls the LLM and returns formatted Markdown
 - [X] Save the formatted Markdown to `data/logs/YYYY-MM-DD.md`
 - [X] Update the database `log_enrichment` record with the formatted content
-- [ ] Update `cli/record.py` to run formatting automatically after transcription
+- [X] Update `cli/record.py` to run formatting automatically after transcription
 
 ### Tips
 - Spend time iterating on your prompt — this is the highest-leverage work in this phase
@@ -135,13 +135,13 @@ After a CLI recording session, a readable, formatted `.md` file appears in `data
 **Estimated effort:** 1–2 sessions
 
 ### Tasks
-- [ ] Update `cli/record.py` to check if a log entry already exists for today
+- [X] Update `cli/record.py` to check if a log entry already exists for today
   - If yes: create a new `log_segment` linked to today's entry (append mode)
   - If no: create a new `log_entry` and first `log_segment`
-- [ ] Update `services/formatter.py` to combine all of a day's transcripts before formatting
+- [X] Update `services/formatter.py` to combine all of a day's transcripts before formatting
   - Concatenate segments in time order, then pass to LLM as one block
-- [ ] Re-generate and overwrite the day's Markdown file when a new segment is added
-- [ ] Test by making two recordings in the same day and checking the output file
+- [X] Re-generate and overwrite the day's Markdown file when a new segment is added
+- [X] Test by making two recordings in the same day and checking the output file
 
 ### Exit Criteria
 Two separate CLI recording sessions on the same day produce one coherent Markdown log file.
@@ -161,7 +161,7 @@ Two separate CLI recording sessions on the same day produce one coherent Markdow
 - [X] Write `services/questioner.py` that calls the LLM and parses the JSON response
 - [X] Store the questions in the `log_enrichment.followup_qs` column
 - [X] Display questions in the terminal after a recording session
-- [ ] Append the questions as a section at the bottom of the day's Markdown file
+- [X] Append the questions as a section at the bottom of the day's Markdown file
 
 ### Tips
 - Prompt engineering matters a lot here. A good starting instruction: *"You are a thoughtful captain's counsellor. Review the logs and ask questions that help the captain reflect, not just report."*
