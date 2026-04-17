@@ -158,9 +158,9 @@ Two separate CLI recording sessions on the same day produce one coherent Markdow
   - Asks the LLM to generate 3–5 follow-up questions
   - Instructs it to notice threads across days (ongoing problems, mentioned intentions, unresolved items)
   - Returns output as a JSON array of question strings
-- [ ] Write `services/questioner.py` that calls the LLM and parses the JSON response
-- [ ] Store the questions in the `log_enrichment.followup_qs` column
-- [ ] Display questions in the terminal after a recording session
+- [X] Write `services/questioner.py` that calls the LLM and parses the JSON response
+- [X] Store the questions in the `log_enrichment.followup_qs` column
+- [X] Display questions in the terminal after a recording session
 - [ ] Append the questions as a section at the bottom of the day's Markdown file
 
 ### Tips

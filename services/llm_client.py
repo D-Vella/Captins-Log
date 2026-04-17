@@ -1,3 +1,6 @@
+import json
+
+
 def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
     import requests
 
@@ -48,7 +51,7 @@ def llm_formatter(prompt: str) -> str:
 
 def llm_question_generator(prompt: str) -> str:
     three_questions_prompt = """
-        You will be given a diary entry.Based on the content of the diary entry, generate a list of 3 follow up questions that the user can ask themselves to reflect deeper on the content of the diary entry. The questions should be open ended and thought provoking. They should help them to gain deeper insights and understanding about themselves based on the content of the diary entry.
+        You will be given a diary entry. Based on the content of the diary entry, generate a list of 3 follow up questions that the user can ask themselves to reflect deeper on the content of the diary entry. The questions should be open ended and thought provoking. They should help them to gain deeper insights and understanding about themselves based on the content of the diary entry.
     """
     questions_response = call_llm_api(prompt=prompt, system=three_questions_prompt, format="json")
     if questions_response == None:
@@ -56,4 +59,9 @@ def llm_question_generator(prompt: str) -> str:
     else:
         print("✅ Question generation completed successfully with length: " + str(len(questions_response)) + " characters.")
     
-    return questions_response
+    questions_response = json.loads(questions_response)
+    question_text = ""
+    for idx, question in enumerate(questions_response['follow_up_questions']):
+        question_text += (f"Question {idx+1}: {question}\n")
+
+    return question_text
