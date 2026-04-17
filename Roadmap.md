@@ -88,7 +88,7 @@ Database schema exists, Alembic can run migrations, and you can read/write recor
   - Starts recording when you press Enter
   - Stops recording when you press Enter again
   - Saves the `.wav` file to `data/audio/` with a timestamped filename
-- [ ] Write `services/transcriber.py` — wraps Faster-Whisper:
+- [X] Write `services/transcriber.py` — wraps Faster-Whisper:
   - Accepts an audio file path
   - Returns the transcript as a string
 - [ ] Wire them together: recording finishes → transcription runs → transcript printed to console
@@ -117,7 +117,7 @@ Run `python cli/record.py`, speak for 30 seconds, and see your words printed to 
   - Preserve the speaker's voice and meaning
   - Output clean Markdown with a date heading
 - [X] Write `services/formatter.py` that calls the LLM and returns formatted Markdown
-- [ ] Save the formatted Markdown to `data/logs/YYYY-MM-DD.md`
+- [X] Save the formatted Markdown to `data/logs/YYYY-MM-DD.md`
 - [X] Update the database `log_enrichment` record with the formatted content
 - [ ] Update `cli/record.py` to run formatting automatically after transcription
 
