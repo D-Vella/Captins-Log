@@ -108,17 +108,17 @@ Run `python cli/record.py`, speak for 30 seconds, and see your words printed to 
 **Estimated effort:** 2–3 sessions
 
 ### Tasks
-- [ ] Write `services/llm_client.py` — a thin wrapper around Ollama's local HTTP API:
+- [X] Write `services/llm_client.py` — a thin wrapper around Ollama's local HTTP API:
   - `def complete(prompt: str, system: str) -> str`
   - Handle timeouts and basic error cases
-- [ ] Write a **formatting prompt** that instructs the LLM to:
+- [X] Write a **formatting prompt** that instructs the LLM to:
   - Remove speech-to-text artefacts ("um", "uh", false starts)
   - Fix punctuation and capitalisation
   - Preserve the speaker's voice and meaning
   - Output clean Markdown with a date heading
-- [ ] Write `services/formatter.py` that calls the LLM and returns formatted Markdown
+- [X] Write `services/formatter.py` that calls the LLM and returns formatted Markdown
 - [ ] Save the formatted Markdown to `data/logs/YYYY-MM-DD.md`
-- [ ] Update the database `log_enrichment` record with the formatted content
+- [X] Update the database `log_enrichment` record with the formatted content
 - [ ] Update `cli/record.py` to run formatting automatically after transcription
 
 ### Tips
@@ -153,7 +153,7 @@ Two separate CLI recording sessions on the same day produce one coherent Markdow
 **Estimated effort:** 2–3 sessions
 
 ### Tasks
-- [ ] Write a **follow-up prompt** that:
+- [X] Write a **follow-up prompt** that:
   - Receives today's transcript and the previous 2–3 days' transcripts as context
   - Asks the LLM to generate 3–5 follow-up questions
   - Instructs it to notice threads across days (ongoing problems, mentioned intentions, unresolved items)
