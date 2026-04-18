@@ -199,7 +199,7 @@ After recording, 3–5 contextual follow-up questions appear in the terminal and
 **Estimated effort:** 3–4 sessions
 
 ### Tasks
-- [ ] Install **FastAPI** and **Uvicorn**
+- [X] Install **FastAPI** and **Uvicorn**
 - [ ] Create `api/main.py` with the following endpoints:
 
 | Method | Path | Purpose |
