@@ -33,7 +33,7 @@ def create_or_get_log_header(entry_date: str) -> int:
         return session.execute(
             text("SELECT id FROM log_entry WHERE entry_date = :date"),
             {"date": entry_date}
-        ).fetchone()[0]
+        ).fetchone()[0] # pyright: ignore[reportOptionalSubscript]
 
 def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: float, raw_transcript: str) -> str:
     with Session() as session:
