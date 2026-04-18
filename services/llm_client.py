@@ -9,14 +9,16 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
         "model": "gemma4:e4b",
         "stream": False,
         "think": False, 
-        "system": system,
-        "prompt": prompt
-            }
-    
+        "mesages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
     if format == "json":
         payload["format"] = "json"
 
-    api_response = requests.post('http://localhost:11434/api/generate',json=payload)
+    api_response = requests.post('http://localhost:11434/api/chat',json=payload)
 
     import json
     returnMessages = api_response.text.splitlines()
