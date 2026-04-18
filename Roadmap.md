@@ -172,6 +172,28 @@ After recording, 3–5 contextual follow-up questions appear in the terminal and
 
 ---
 
+## Phase 6b — SQLAlchemy ORM Refactor
+**Goal:** Replace every raw `text()` SQL string in `services/database.py` with proper SQLAlchemy ORM operations that use the model classes defined in `services/models.py`. The models exist — now the rest of the code should actually use them.
+**Estimated effort:** 1–2 sessions
+
+### Tasks
+- [ ] Refactor `create_or_get_log_header()` — replace the `SELECT` and `INSERT` raw strings with a `select(log_entry).where(...)` query and a `session.add(log_entry(...))` insert; return the model object instead of a bare `int`
+- [ ] Refactor `create_log_segment()` — replace the raw `INSERT` with `session.add(log_segment(...))`, and replace the `GROUP_CONCAT` raw query by loading all segments via the `log_entry.log_segments` relationship and joining transcripts in Python
+- [ ] Refactor `create_log_enrichment()` — replace the raw `INSERT` with `session.add(log_enrichment(...))`
+- [ ] Refactor `reset_db()` — replace raw `DELETE` strings with ORM delete calls (`session.query(Model).delete()` or `delete(Model)` in 2.0 style)
+- [ ] Verify `cli/end-to-end.ipynb` and `cli/recording_test.ipynb` still run correctly after the refactor
+
+### Tips
+- SQLAlchemy 2.0 style uses `select()` + `session.scalar()` / `session.scalars()` rather than the older `session.query()` — prefer the 2.0 style since that's what `models.py` uses (`Mapped`, `mapped_column`)
+- After `session.add(new_object)` call `session.flush()` (before `session.commit()`) to populate the auto-generated `id` without closing the transaction — useful if you need the new ID immediately
+- For the transcript aggregation, loading `entry.log_segments` and doing `" ".join(s.raw_transcript for s in entry.log_segments)` in Python is cleaner than a raw `GROUP_CONCAT` and avoids mixing ORM and raw SQL in the same function
+- Once `database.py` is fully ORM-based, downstream callers (notebooks, future API routes) can receive model objects and access fields by attribute rather than by index, which is much easier to read
+
+### Exit Criteria
+`services/database.py` contains no `text(...)` calls. All reads and writes go through model class instances, and the end-to-end notebook still produces a correctly formatted log file.
+
+---
+
 ## Phase 7 — FastAPI Backend
 **Goal:** Wrap all your CLI services behind a proper HTTP API so a browser can interact with them.
 **Estimated effort:** 3–4 sessions
@@ -290,9 +312,10 @@ Clicking a button in the browser generates and displays a weekly summary Markdow
 | 4. LLM Enrichment | 2–3 sessions | 7–11 |
 | 5. Supplemental Recordings | 1–2 sessions | 8–13 |
 | 6. Follow-Up Questions | 2–3 sessions | 10–16 |
-| 7. FastAPI Backend | 3–4 sessions | 13–20 |
-| 8. Web Frontend | 3–5 sessions | 16–25 |
-| 9. Weekly Review | 2 sessions | 18–27 |
+| 6b. SQLAlchemy ORM Refactor | 1–2 sessions | 11–18 |
+| 7. FastAPI Backend | 3–4 sessions | 14–22 |
+| 8. Web Frontend | 3–5 sessions | 17–27 |
+| 9. Weekly Review | 2 sessions | 19–29 |
 | 10. Polish | Ongoing | — |
 
 At 1–2 sessions per week, you're looking at a fully working v1 in **3–5 months** with plenty of natural pause points along the way.
