@@ -209,6 +209,7 @@ __marimo__/
 # testing data:
 test_data/
 data/logs/
+data/audio/
 
 #sqlite db files:
 *.db
