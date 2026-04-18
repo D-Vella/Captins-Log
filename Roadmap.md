@@ -37,7 +37,7 @@ You can run a Python script that sends a prompt to Ollama and prints the respons
 
 ### Tasks
 - [X] Choose your database — **SQLite** is recommended to start (zero config, single file, easy to inspect)
-- [ ] Install **SQLAlchemy** (ORM) and **Alembic** (migrations) — both will feel familiar coming from C#/Entity Framework territory
+- [X] Install **SQLAlchemy** (ORM) and **Alembic** (migrations) — both will feel familiar coming from C#/Entity Framework territory
 - [X] Design and create your schema:
 
 ```sql
@@ -230,12 +230,12 @@ You can open a browser, record your voice, and see the formatted log and follow-
 **Estimated effort:** 2 sessions
 
 ### Tasks
-- [ ] Write a **weekly review prompt** that instructs the LLM to:
+- [X] Write a **weekly review prompt** that instructs the LLM to:
   - Summarise what was worked on across the week
   - Identify recurring themes or blockers
   - List any outstanding actions mentioned but not resolved
   - Note what went well vs. what didn't
-- [ ] Write `services/weekly_reviewer.py`
+- [X] Write `services/weekly_reviewer.py` (Added to the llm file instead)
 - [ ] Add a `/logs/weekly-review` POST endpoint that triggers the review for the current or specified week
 - [ ] Save the summary to `data/logs/week-YYYY-WW.md` and to the database
 - [ ] Add a "Generate Weekly Review" button to the UI

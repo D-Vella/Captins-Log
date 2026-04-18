@@ -1,94 +1,65 @@
-import sqlite3
-sqlite_db_path = '../db/application.db'
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timezone
 
-def run_query(query, params=(), commit=False, fetch='none'):
-    conn = sqlite3.connect(sqlite_db_path)
-    cursor = conn.cursor()
-    try:
-        cursor.execute(query, params)
-        if commit:
-            conn.commit()
-        if fetch == 'one':
-            return cursor.fetchone()
-        elif fetch == 'all':
-            return cursor.fetchall()
-        elif fetch == 'id':
-            return cursor.lastrowid
-        else:
-            return None
-    except sqlite3.Error as e:
-        print(f"❌ An error occurred: {e}")
-        return None
-    finally:
-        conn.close()
+DATABASE_URL = "sqlite:///../db/application.db"
+
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
 
 def reset_db():
-    delete_log_header_query = "DELETE FROM log_entry;"
-    delete_log_segments_query = "DELETE FROM log_segment;"
-    delete_log_enrichment_query = "DELETE FROM log_enrichment;"
-
-    run_query(delete_log_header_query, commit=True)
-    run_query(delete_log_segments_query, commit=True)
-    run_query(delete_log_enrichment_query, commit=True)
+    with Session() as session:
+        session.execute(text("DELETE FROM log_enrichment;"))
+        session.execute(text("DELETE FROM log_segment;"))
+        session.execute(text("DELETE FROM log_entry;"))
+        session.commit()
     print("✅ Database reset successfully.")
-    
 
-def create_or_get_log_header(entry_date: str):
-    Get_log_entry_query = """
-    SELECT id FROM log_entry WHERE entry_date = ?;
-    """
-    result = run_query(Get_log_entry_query, (entry_date,), fetch='one')
+def create_or_get_log_header(entry_date: str) -> int:
+    with Session() as session:
+        result = session.execute(
+            text("SELECT id FROM log_entry WHERE entry_date = :date"),
+            {"date": entry_date}
+        ).fetchone()
 
-    if result:
-        log_entry_id = result[0] # pyright: ignore[reportIndexIssue]
-    else:
-        Insert_log_entry_query = """
-        INSERT INTO log_entry (entry_date, created_at, updated_at)
-        VALUES (?, datetime('now'), datetime('now'));
-        """
-        log_entry_id = run_query(Insert_log_entry_query, (entry_date,), commit=True, fetch='id')
+        if result:
+            return result[0]
 
-    return log_entry_id
+        session.execute(
+            text("INSERT INTO log_entry (entry_date, created_at, updated_at) VALUES (:date, :now, :now)"),
+            {"date": entry_date, "now": datetime.now(timezone.utc)}
+        )
+        session.commit()
+        return session.execute(
+            text("SELECT id FROM log_entry WHERE entry_date = :date"),
+            {"date": entry_date}
+        ).fetchone()[0]
 
-def create_log_segment(log_entry_id, audio_filename, duration_secs, raw_transcript) -> str:
-    """Creates a log segment record in the database linked to the provided log entry ID. If there are multiple segements for a given log entry, the funtion will return a unified transcript for all segments linked to that log entry.
-    Args:
-        log_entry_id (int): The ID of the log entry to link this segment to.
-        audio_filename (str): The filename of the audio recording.
-        duration_secs (float): The duration of the audio recording in seconds.
-        raw_transcript (str): The raw transcript text from the audio.
-        Returns:
-            str: The unified transcript for all segments linked to the log entry.
-    """
-    result = []
-    Insert_log_entry_query = """
-    INSERT INTO log_segment (log_entry_id, audio_filename, duration_secs, raw_transcript, created_at)
-    VALUES (?, ?, ?, ?, datetime('now'));
-    """
-    new_record_id = run_query(Insert_log_entry_query, (log_entry_id, audio_filename, duration_secs, raw_transcript), commit=True, fetch='id')
+def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: float, raw_transcript: str) -> str:
+    with Session() as session:
+        session.execute(
+            text("""INSERT INTO log_segment (log_entry_id, audio_filename, duration_secs, raw_transcript, created_at)
+                    VALUES (:entry_id, :filename, :duration, :transcript, :now)"""),
+            {"entry_id": log_entry_id, "filename": audio_filename,
+             "duration": duration_secs, "transcript": raw_transcript,
+             "now": datetime.now(timezone.utc)}
+        )
+        session.commit()
+        print(f"✅ Log segment created for entry ID: {log_entry_id}")
 
-    if new_record_id is None:
-        raise ValueError("Failed to create log segment. Aborting process.")
-    else:
-        print(f"✅ Log segment created with ID: {new_record_id}")
+        result = session.execute(
+            text("SELECT GROUP_CONCAT(raw_transcript, ' ') FROM log_segment WHERE log_entry_id = :entry_id"),
+            {"entry_id": log_entry_id}
+        ).fetchone()
 
-    # Check if there are multiple segments for the same log entry and unify their transcripts if so
+        return result[0] if result else raw_transcript
 
-    get_unified_transcript_query = """
-        SELECT GROUP_CONCAT(raw_transcript, ' ') AS unified_transcript
-        FROM log_segment 
-        WHERE log_entry_id = ?;
-    """
-    result = run_query(get_unified_transcript_query, (log_entry_id,), fetch='one')
-    unified_transcript = result[0] if result else raw_transcript # pyright: ignore[reportIndexIssue]
-
-    return unified_transcript
-
-def create_log_enrichment(log_entry_id, formatted_md, followup_qs):
-    Insert_log_entry_query = """
-    INSERT INTO log_enrichment (log_entry_id, formatted_md, followup_qs, generated_at)
-    VALUES (?, ?, ?, datetime('now'));
-    """
-    new_record_id = run_query(Insert_log_entry_query, (log_entry_id, formatted_md, followup_qs), commit=True, fetch='id')
-        
-    return new_record_id
+def create_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str) -> None:
+    with Session() as session:
+        session.execute(
+            text("""INSERT INTO log_enrichment (log_entry_id, formatted_md, followup_qs, generated_at)
+                    VALUES (:entry_id, :md, :qs, :now)"""),
+            {"entry_id": log_entry_id, "md": formatted_md,
+             "qs": followup_qs, "now": datetime.now(timezone.utc)}
+        )
+        session.commit()
