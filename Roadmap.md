@@ -320,3 +320,16 @@ Clicking a button in the browser generates and displays a weekly summary Markdow
 | 10. Polish | Ongoing | — |
 
 At 1–2 sessions per week, you're looking at a fully working v1 in **3–5 months** with plenty of natural pause points along the way.
+
+# Future ideas:
+
+|Index|Idea|Details|
+|-----|----|-------|
+|1|Connect to the app from work laptop| This will require working out some networking issues|
+|2|Phone App| Big wall to climb here as thats building a whole new thing|
+|3|Multiple Journal Types| Allows you to break out work and personal entries|
+|4|Larger review windows| Have monthly/quarterly/annual reviews|
+|5|Vector Database to assist with reviews| As it says so the AI can get additional context when doing reviews|
+|6|AI Tool Suite| AS I used the LLM more it might be useful to give the LLM tools to get additional data|
+|7|Use larger models| As it says and compare results|
+|8|A Project diary| Kind of a continuation of #3 but having a project that the LLM can mainly keep track of tasks.|
