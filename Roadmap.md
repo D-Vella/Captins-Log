@@ -202,15 +202,16 @@ After recording, 3–5 contextual follow-up questions appear in the terminal and
 - [X] Install **FastAPI** and **Uvicorn**
 - [ ] Create `api/main.py` with the following endpoints:
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| `POST` | `/logs/segments` | Upload an audio file, trigger transcription + enrichment |
-| `GET` | `/logs` | List all log entries (date, segment count) |
-| `GET` | `/logs/{date}` | Get a specific day's full entry (transcripts, markdown, questions) |
-| `GET` | `/logs/{date}/markdown` | Return the raw Markdown file |
-| `GET` | `/logs/week` | Get this week's entries for weekly review |
+| Method | Path | Purpose | Done |
+|--------|------|---------|------|
+| `POST` | `/logs/segments` | Upload an audio file, trigger transcription + enrichment ||
+| `GET` | `/logs` | List all log entries (date, segment count) | Partial |
+| `GET` | `/logs/{date}` | Get a specific day's full entry (transcripts, markdown, questions) ||
+| `GET` | `/logs/{date}/markdown` | Return the raw Markdown file ||
+| `GET` | `/logs/week` | Get this week's entries for weekly review ||
+| `GET` | `/health` | Get this week's entries for weekly review | Partial |
 
-- [ ] Move your service logic from the CLI scripts into the `services/` layer (most of it probably already is)
+- [X] Move your service logic from the CLI scripts into the `services/` layer (most of it probably already is)
 - [ ] Test all endpoints using **FastAPI's built-in Swagger UI** at `http://localhost:8000/docs` — no frontend needed yet
 - [ ] Add basic error handling (404s, failed transcriptions, LLM timeouts)
 

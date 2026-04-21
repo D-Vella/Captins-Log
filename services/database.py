@@ -1,8 +1,10 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timezone
+import os
 
-DATABASE_URL = "sqlite:///../db/application.db"
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATABASE_URL = f"sqlite:///{_BASE_DIR}/db/application.db"
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -63,3 +65,41 @@ def create_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str
              "qs": followup_qs, "now": datetime.now(timezone.utc)}
         )
         session.commit()
+
+def api_get_logs(log_id:str):
+    """
+    Api call to return a specifc log or a list of logs.
+    args: log_id = a string of the log identifer.
+    """
+    
+    with Session() as session:
+        if len(log_id) ==0:
+            results = session.execute(
+                text("""
+                        SELECT id, entry_date, created_at
+                     FROM log_entry
+                    """)
+            ).fetchall()
+        
+        else:
+            results = session.execute(
+                text("""
+                        SELECT id, entry_date, created_at
+                     FROM log_entry
+                     WHERE id = :log_id
+                     """),
+                     {"log_id": log_id}
+            ).fetchone()
+    
+    session.close()
+
+    if not results:
+        return None
+
+    def row_to_dict(row):
+        return {'id': row[0], 'entry_date': row[1], 'created_at': str(row[2])}
+
+    if len(log_id) == 0:
+        return {idx: row_to_dict(row) for idx, row in enumerate(results)}
+    else:
+        return row_to_dict(results)

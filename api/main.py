@@ -2,9 +2,11 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+import json
+
 
 # Import your services here as you build them out
-# from services.database import get_db
+from services.database import api_get_logs
 # from services.llm_client import LLMClient
 # from services.transcriber import Transcriber
 # from services.printer import Printer
@@ -48,7 +50,7 @@ async def root():
     Root endpoint that returns a welcome message.
     This is a good place to provide API status or basic info.
     """
-    return {"message": "Welcome to Captain's Log API"}
+    return {"message": "Welcome to the Captain's Log API. This is currently under development."}
 
 # Example endpoint for starting a recording
 @app.post("/recordings/start")
@@ -86,11 +88,22 @@ async def get_logs():
     """
     Endpoint to retrieve logs.
     - Query database for logs
-    - Return list of log entries
+    - Return list of log entries.
     """
-    # TODO: Implement log retrieval using services/database.py
-    # Example: logs = db.get_logs()
-    return {"logs": ["Example log entry 1", "Example log entry 2"]}
+    result =  api_get_logs('')
+    return json.dumps(result)
+
+# Example endpoint for logs
+@app.get("/logs/{log_id}")
+async def get_log(log_id:str):
+    """
+    Endpoint to retrieve a particular log.
+    - Query database for logs
+    - Returns the log entry in question
+    """
+    result = api_get_logs(log_id=log_id)
+    
+    return json.dumps(result)
 
 # Add more endpoints as needed, such as:
 # - POST /recordings/{id}/stop - Stop a recording
@@ -107,7 +120,7 @@ async def health_check():
     Return status of dependencies (DB, services, etc.)
     """
     # TODO: Check database connection, service availability
-    return {"status": "healthy"}
+    return {"status": "Not Implemented!"}
 
 # Run the app with uvicorn when this file is executed directly
 if __name__ == "__main__":
