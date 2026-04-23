@@ -103,3 +103,16 @@ def api_get_logs(log_id:str):
         return {idx: row_to_dict(row) for idx, row in enumerate(results)}
     else:
         return row_to_dict(results)
+    
+def api_health_check():
+    with Session() as session:
+        results = session.execute(
+                text("""
+                        SELECT COUNT( DISTINCT id) AS Row_Count
+                     FROM log_entry
+                    """)).first()
+        response = {
+            "Status":"All systems good",
+            "Log Count":results[0] # pyright: ignore[reportOptionalSubscript]
+        }
+        return response

@@ -6,7 +6,7 @@ import json
 
 
 # Import your services here as you build them out
-from services.database import api_get_logs
+from services.database import api_get_logs, api_health_check
 # from services.llm_client import LLMClient
 # from services.transcriber import Transcriber
 # from services.printer import Printer
@@ -119,8 +119,8 @@ async def health_check():
     Health check endpoint for monitoring.
     Return status of dependencies (DB, services, etc.)
     """
-    # TODO: Check database connection, service availability
-    return {"status": "Not Implemented!"}
+    result = api_health_check()
+    return json.dumps(result)
 
 # Run the app with uvicorn when this file is executed directly
 if __name__ == "__main__":
