@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 import json
@@ -43,6 +44,8 @@ class TranscriptionResponse(BaseModel):
 #     # Return database connection or session
 #     pass
 
+app.mount("/static", StaticFiles(directory="static", html=True), name="static")
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -51,6 +54,17 @@ async def root():
     This is a good place to provide API status or basic info.
     """
     return {"message": "Welcome to the Captain's Log API. This is currently under development."}
+
+# Example endpoint for starting a recording
+@app.post("/recordings/upload")
+async def upload_recording(file: UploadFile):
+    """
+    Endpoint to upload a recording.
+    - returns a recording id.
+    """
+
+    return {"message": "Under construction"}
+
 
 # Example endpoint for starting a recording
 @app.post("/recordings/start")
