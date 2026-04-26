@@ -9,14 +9,16 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
         "model": "gemma4:e4b",
         "stream": False,
         "think": False, 
-        "system": system,
-        "prompt": prompt
-            }
-    
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
     if format == "json":
         payload["format"] = "json"
 
-    api_response = requests.post('http://localhost:11434/api/generate',json=payload)
+    api_response = requests.post('http://localhost:11434/api/chat',json=payload)
 
     import json
     returnMessages = api_response.text.splitlines()
@@ -24,7 +26,7 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
 
     for idx, message in enumerate(returnMessages):
         returnMessage = json.loads(message)
-        completeMessage += returnMessage['response']
+        completeMessage += returnMessage.get('message', {}).get('content', '')
 
     return completeMessage
 
@@ -51,7 +53,9 @@ def llm_formatter(prompt: str) -> str:
 
 def llm_question_generator(prompt: str) -> str:
     three_questions_prompt = """
-        You will be given a diary entry. Based on the content of the diary entry, generate a list of 3 follow up questions that the user can ask themselves to reflect deeper on the content of the diary entry. The questions should be open ended and thought provoking. They should help them to gain deeper insights and understanding about themselves based on the content of the diary entry.
+                You will be given a diary entry. Based on the content of the diary entry, generate a list of 3 follow up questions that the user can ask themselves to reflect deeper on the content of the diary entry. The questions should be open ended and thought provoking. They should help them to gain deeper insights and understanding about themselves based on the content of the diary entry.
+        
+        Your response will be a JSON object with a single key "follow_up_questions" which is a list of the three questions you have generated. Do not include any other text in your response.
     """
     questions_response = call_llm_api(prompt=prompt, system=three_questions_prompt, format="json")
     if questions_response == None:
@@ -59,10 +63,19 @@ def llm_question_generator(prompt: str) -> str:
     else:
         print("✅ Question generation completed successfully with length: " + str(len(questions_response)) + " characters.")
     
-    questions_response = json.loads(questions_response)
-    question_text = ""
-    for idx, question in enumerate(questions_response['follow_up_questions']):
-        question_text += (f"Question {idx+1}: {question}\n")
+    if questions_response.startswith('```'):
+        questions_response = questions_response.split('\n', 1)[1]
+        questions_response = questions_response.rsplit('```', 1)[0].strip()
+
+    try:
+        questions_response = json.loads(questions_response)
+        question_text = ""
+        for idx, question in enumerate(questions_response['follow_up_questions']):
+            question_text += (f"Question {idx+1}: {question}\n")
+    except Exception as e:
+        print("Issue with LLM response. Printing raw response.")
+        print(f"\n{repr(questions_response)}")
+        raise ValueError(f"Failed to parse question generation response: {e}")
 
     return question_text
 
