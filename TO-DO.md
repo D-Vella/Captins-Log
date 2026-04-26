@@ -1,4 +1,4 @@
-# Captain's Log — Outstanding Tasks (Phases 1–6b)
+# Captain's Log — Outstanding Tasks (Phases 6b & 7)
 
 ---
 
@@ -82,4 +82,42 @@
 
 ---
 
-*All Phase 1–6 tasks are complete. Phase 6b is the only remaining work before Phase 7 (FastAPI Backend).*
+---
+
+## Phase 7 — Streamlit UI
+
+- [ ] **Install dependencies**
+
+  ```bash
+  pip install streamlit streamlit-audiorecorder
+  ```
+
+- [ ] **Create `app.py` at the project root and confirm it boots**
+
+  ```bash
+  streamlit run app.py
+  ```
+
+  Start with a bare `st.title("Captain's Log")` to verify the server runs before wiring in services.
+
+- [ ] **Build the Record & Process page**
+
+  Wire `streamlit-audiorecorder` (or `st.file_uploader`) → `transcriber.transcribe_audio()` → `llm_client.llm_formatter()` + `llm_client.llm_question_generator()` → `database` save → display results with `st.markdown()`.
+
+  Use `st.session_state` to hold the transcript between the audio step and the LLM step so a page rerun doesn't re-trigger transcription. Wrap each slow call in `st.spinner()`.
+
+- [ ] **Build the Today's Log view**
+
+  Read `data/logs/{today}.md` from disk and render it with `st.markdown()`. If the file doesn't exist yet, show a prompt to make a recording.
+
+- [ ] **Build the Log History page**
+
+  Query `log_entry` records from the database, display as a list. Use `st.selectbox` or `st.radio` to pick an entry and render its Markdown.
+
+- [ ] **Test end-to-end in the browser**
+
+  Open `http://localhost:8501`, record or upload audio, and confirm the formatted log and follow-up questions appear.
+
+---
+
+*All Phase 1–6 tasks are complete. Complete Phase 6b (ORM refactor) before starting Phase 7 to keep the service layer clean.*

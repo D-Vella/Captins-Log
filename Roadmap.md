@@ -194,61 +194,38 @@ After recording, 3–5 contextual follow-up questions appear in the terminal and
 
 ---
 
-## Phase 7 — FastAPI Backend
-**Goal:** Wrap all your CLI services behind a proper HTTP API so a browser can interact with them.
-**Estimated effort:** 3–4 sessions
+## Phase 7 — Streamlit UI
+**Goal:** Build a simple Streamlit app that puts a browser face on everything built so far — record audio, run the full pipeline, and browse your log history — with no HTML, JavaScript, or separate API layer required.
+**Estimated effort:** 2–3 sessions
 
 ### Tasks
-- [ ] Install **FastAPI** and **Uvicorn**
-- [ ] Create `api/main.py` with the following endpoints:
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| `POST` | `/logs/segments` | Upload an audio file, trigger transcription + enrichment |
-| `GET` | `/logs` | List all log entries (date, segment count) |
-| `GET` | `/logs/{date}` | Get a specific day's full entry (transcripts, markdown, questions) |
-| `GET` | `/logs/{date}/markdown` | Return the raw Markdown file |
-| `GET` | `/logs/week` | Get this week's entries for weekly review |
-
-- [ ] Move your service logic from the CLI scripts into the `services/` layer (most of it probably already is)
-- [ ] Test all endpoints using **FastAPI's built-in Swagger UI** at `http://localhost:8000/docs` — no frontend needed yet
-- [ ] Add basic error handling (404s, failed transcriptions, LLM timeouts)
+- [ ] Install Streamlit and a browser audio component: `pip install streamlit streamlit-audiorecorder`
+- [ ] Create `app.py` at the project root and confirm it runs with `streamlit run app.py`
+- [ ] Build a **Record & Process** page:
+  - Accept audio via `streamlit-audiorecorder` (browser mic) or `st.file_uploader` (upload a `.wav`/`.m4a` from disk)
+  - Wire the audio through `services/transcriber.py` → `services/llm_client.py` → `services/database.py`
+  - Display the transcript, formatted Markdown (`st.markdown()`), and follow-up questions once processing completes
+- [ ] Build a **Today's Log** view:
+  - Load and render today's `data/logs/YYYY-MM-DD.md` on page load
+  - Show follow-up questions below the entry
+- [ ] Build a **Log History** page:
+  - Query the database for all log entries, newest first
+  - Clicking an entry renders its Markdown and questions
 
 ### Tips
-- FastAPI will feel very comfortable — type hints, decorators, and clear structure. Very similar mental model to ASP.NET minimal APIs in C#.
-- Run with: `uvicorn api.main:app --reload`
+- Streamlit reruns the entire script on every interaction — use `st.session_state` to hold in-progress values (e.g. the transcript while the LLM is still formatting)
+- Wrap slow operations in `st.spinner("Transcribing…")` and `st.spinner("Asking the LLM…")` so the UI doesn't look frozen
+- Use Streamlit's multi-page app feature — put each page as a file inside a `pages/` folder and Streamlit generates the sidebar navigation automatically
+- `st.audio(audio_bytes)` plays back any recording inline with no extra work
+- For browser recording, `streamlit-audiorecorder` is the simplest drop-in; `st.file_uploader(type=["wav","m4a","mp3"])` is a good fallback for uploading phone recordings
 
 ### Exit Criteria
-All endpoints work via the Swagger UI. You can upload an audio file via the browser and get a transcript back.
+Open `http://localhost:8501`, record or upload audio, and see the formatted log and follow-up questions rendered in the browser.
 
 ---
 
-## Phase 8 — Web Frontend (Basic)
-**Goal:** A simple browser UI that lets you record, view logs, and see follow-up questions. No frameworks — just HTML and HTMX.
-**Estimated effort:** 3–5 sessions
-
-### Tasks
-- [ ] Install **HTMX** (just a `<script>` tag — no npm needed)
-- [ ] Serve static files from FastAPI (`StaticFiles` mount)
-- [ ] Build `index.html` with three sections:
-  - **Record** — a button that uses the browser's `MediaRecorder` API to record and POST the audio to `/logs/segments`
-  - **Today's Log** — loads and displays today's formatted Markdown and follow-up questions
-  - **Log History** — a simple list of past entries with links
-- [ ] Style it simply — aim for functional, not beautiful, at this stage. Dark theme + monospace font goes a long way for the aesthetic.
-- [ ] Handle the recording state (idle → recording → processing → done) with basic JS
-
-### Tips
-- `MediaRecorder` in the browser records to a `Blob`, which you send as `multipart/form-data` to FastAPI
-- HTMX lets you reload the "Today's Log" panel automatically after a recording completes — no page refresh needed
-- Look up the **`marked.js`** library (one script tag) to render Markdown in the browser
-
-### Exit Criteria
-You can open a browser, record your voice, and see the formatted log and follow-up questions appear on screen — end-to-end in the UI.
-
----
-
-## Phase 9 — Weekly Review
-**Goal:** The system automatically (or on demand) generates a weekly summary of all logs.
+## Phase 8 — Weekly Review
+**Goal:** The system generates a weekly summary of all logs on demand from within the Streamlit UI.
 **Estimated effort:** 2 sessions
 
 ### Tasks
@@ -258,28 +235,72 @@ You can open a browser, record your voice, and see the formatted log and follow-
   - List any outstanding actions mentioned but not resolved
   - Note what went well vs. what didn't
 - [X] Write `services/weekly_reviewer.py` (Added to the llm file instead)
-- [ ] Add a `/logs/weekly-review` POST endpoint that triggers the review for the current or specified week
 - [ ] Save the summary to `data/logs/week-YYYY-WW.md` and to the database
-- [ ] Add a "Generate Weekly Review" button to the UI
-- [ ] (Optional) Use **APScheduler** to run this automatically every Sunday evening
+- [ ] Add a **Weekly Review** page to the Streamlit app with a "Generate this week's review" button that calls the LLM and renders the result with `st.markdown()`
+- [ ] (Optional) Use **APScheduler** to trigger the review automatically every Sunday evening
 
 ### Exit Criteria
-Clicking a button in the browser generates and displays a weekly summary Markdown document.
+Clicking the button in the Streamlit app generates and displays a weekly summary Markdown document.
 
 ---
 
-## Phase 10 — Polish & Quality of Life
+## Phase 9 — Polish & Quality of Life
 **Goal:** Tighten up the rough edges before calling it v1.0.
 **Estimated effort:** Ongoing
 
 ### Tasks
-- [ ] Add audio playback to the UI — let you listen back to any segment
-- [ ] Add a search endpoint and UI to search across all transcripts by keyword
-- [ ] Improve error feedback in the UI (recording failures, LLM timeouts)
-- [ ] Add a simple settings page to change the Ollama model, number of context days for follow-ups, etc.
+- [ ] Add audio playback to any log entry — `st.audio()` renders a player inline with no extra libraries
+- [ ] Add a search page in Streamlit to search across all transcripts by keyword
+- [ ] Improve error feedback in the UI (recording failures, LLM timeouts, missing audio device)
+- [ ] Add a settings page to change the Ollama model, number of context days for follow-ups, etc. — store in a simple config file or `st.session_state`
 - [ ] Write a `README.md` with setup instructions (you'll thank yourself later)
 - [ ] Consider audio file compression to manage storage over time (FFmpeg + Python subprocess)
-- [ ] Add log export — zip of all Markdown files for backup
+- [ ] Add log export — zip of all Markdown files available as a download via `st.download_button()`
+
+---
+
+## Future Phases (TBD) — REST API & Custom Web Frontend
+
+These phases are deferred in favour of the Streamlit-first approach. The content is preserved here for reference if the project later needs a dedicated API layer, a mobile client, or a custom web interface.
+
+---
+
+### FastAPI Backend (TBD)
+**Goal:** Wrap all services behind a proper HTTP API so any client (mobile app, custom web UI, CLI) can interact with them.
+
+#### Tasks
+- [ ] Install **FastAPI** and **Uvicorn**: `pip install fastapi uvicorn`
+- [ ] Create `api/main.py` with the following endpoints:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/logs/segments` | Upload an audio file, trigger transcription + enrichment |
+| `GET` | `/logs` | List all log entries (date, segment count) |
+| `GET` | `/logs/{date}` | Get a specific day's full entry (transcripts, markdown, questions) |
+| `GET` | `/logs/{date}/markdown` | Return the raw Markdown file |
+| `GET` | `/logs/week` | Get this week's entries for weekly review |
+| `POST` | `/logs/weekly-review` | Trigger a weekly summary for the current or specified week |
+
+- [ ] Test all endpoints via the built-in Swagger UI at `http://localhost:8000/docs`
+- [ ] Add basic error handling (404s, failed transcriptions, LLM timeouts)
+- [ ] Install `python-multipart` for file upload support: `pip install python-multipart`
+
+#### Tips
+- FastAPI type hints and decorators will feel familiar — very similar mental model to ASP.NET minimal APIs in C#
+- Run with: `uvicorn api.main:app --reload`
+
+---
+
+### Custom Web Frontend (TBD)
+**Goal:** A purpose-built browser UI decoupled from the Python backend, communicating via the FastAPI layer above.
+
+#### Tasks
+- [ ] Serve static files from FastAPI (`StaticFiles` mount) or deploy separately
+- [ ] Build `index.html` with a Record page, Today's Log view, and Log History list
+- [ ] Use **HTMX** (single `<script>` tag, no npm) for reactive updates without a JS framework
+- [ ] Use **`marked.js`** (single `<script>` tag) to render Markdown in the browser
+- [ ] Handle recording state (idle → recording → processing → done) with the browser `MediaRecorder` API
+- [ ] Style with a dark theme and monospace font for the aesthetic
 
 ---
 
@@ -290,15 +311,18 @@ Clicking a button in the browser generates and displays a weekly summary Markdow
 | `faster-whisper` | Local transcription | `pip install faster-whisper` |
 | `sqlalchemy` | ORM | `pip install sqlalchemy` |
 | `alembic` | DB migrations | `pip install alembic` |
-| `fastapi` | Web API framework | `pip install fastapi` |
-| `uvicorn` | ASGI server | `pip install uvicorn` |
 | `sounddevice` | CLI audio recording | `pip install sounddevice` |
 | `soundfile` | Audio file I/O | `pip install soundfile` |
+| `streamlit` | Web UI framework | `pip install streamlit` |
+| `streamlit-audiorecorder` | Browser mic recording | `pip install streamlit-audiorecorder` |
 | `httpx` | HTTP client for Ollama | `pip install httpx` |
-| `python-multipart` | File uploads in FastAPI | `pip install python-multipart` |
 | Ollama | Local LLM server | https://ollama.com |
-| HTMX | Frontend interactivity | CDN script tag |
-| marked.js | Markdown rendering | CDN script tag |
+| **TBD** | | |
+| `fastapi` | REST API framework (future) | `pip install fastapi` |
+| `uvicorn` | ASGI server (future) | `pip install uvicorn` |
+| `python-multipart` | File uploads in FastAPI (future) | `pip install python-multipart` |
+| HTMX | Custom frontend interactivity (future) | CDN script tag |
+| marked.js | Markdown rendering in browser (future) | CDN script tag |
 
 ---
 
@@ -313,9 +337,9 @@ Clicking a button in the browser generates and displays a weekly summary Markdow
 | 5. Supplemental Recordings | 1–2 sessions | 8–13 |
 | 6. Follow-Up Questions | 2–3 sessions | 10–16 |
 | 6b. SQLAlchemy ORM Refactor | 1–2 sessions | 11–18 |
-| 7. FastAPI Backend | 3–4 sessions | 14–22 |
-| 8. Web Frontend | 3–5 sessions | 17–27 |
-| 9. Weekly Review | 2 sessions | 19–29 |
-| 10. Polish | Ongoing | — |
+| 7. Streamlit UI | 2–3 sessions | 13–21 |
+| 8. Weekly Review | 2 sessions | 15–23 |
+| 9. Polish | Ongoing | — |
+| TBD. REST API & Custom Frontend | TBD | — |
 
 At 1–2 sessions per week, you're looking at a fully working v1 in **3–5 months** with plenty of natural pause points along the way.
