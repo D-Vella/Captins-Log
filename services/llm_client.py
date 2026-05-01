@@ -71,7 +71,7 @@ def llm_question_generator(prompt: str) -> str:
         questions_response = json.loads(questions_response)
         question_text = ""
         for idx, question in enumerate(questions_response['follow_up_questions']):
-            question_text += (f"Question {idx+1}: {question}\n")
+            question_text += (f"\n\n### Question {idx+1}:\n\n{question}\n\n")
     except Exception as e:
         print("Issue with LLM response. Printing raw response.")
         print(f"\n{repr(questions_response)}")
@@ -87,8 +87,6 @@ def weekly_review(prompt: str) ->str:
             * List any outstanding actions mentioned but not resolved
             * Note what went well vs. what didn't
         The goal of this review is to help the user reflect on their week, identify areas for improvement, and celebrate their wins. 
-
-
     """
     weekly_review_response = call_llm_api(prompt=prompt, system=weekly_review_prompt, format="markdown")
     if weekly_review_response == None:

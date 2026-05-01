@@ -168,6 +168,7 @@ Always handle these two cases separately, or use `fetchall()` for both (a single
 
 ### 10. `datetime` objects are not JSON serialisable by default
 
+
 **The bug:**  
 Returning a dict containing a `datetime` object through `json.dumps()` raises a `TypeError`.
 
@@ -178,5 +179,73 @@ Returning a dict containing a `datetime` object through `json.dumps()` raises a 
 
 **Why it matters:**  
 Python's `json` module only knows how to serialise basic types: strings, numbers, lists, dicts, booleans, and `None`. Any other type — `datetime`, `Decimal`, SQLAlchemy Row objects, etc. — must be converted manually before calling `json.dumps()`. A quick `str()` works for datetimes; for more control use `.isoformat()`.
+
+---
+
+## Session 2 — 2026-05-01
+
+---
+
+### 11. Unsaved files are invisible to the running program (and to other tools)
+
+**The situation:**  
+Three functions were written in `services/database.py` and the IDE was correctly showing them (autocomplete, docstrings, go-to-definition all worked). Importing them in `app.py` raised an `ImportError` at runtime.
+
+**Why it matters:**  
+The IDE reads the in-memory buffer — it shows you what you've typed, whether or not it has been written to disk. The running Python process (and any tool that reads files from disk) sees only the saved version. Until you save, your changes don't exist outside the editor. When an `ImportError` says a name doesn't exist, check that the file is saved before looking for deeper causes.
+
+---
+
+### 14. Jupyter caches imported modules — restart the kernel after changing backing files
+
+**The situation:**  
+`llm_client.py` was edited to fix a bug in `llm_question_generator`. The notebook was re-run and the output was still wrong, even though the fix was correctly saved on disk.
+
+**Why it matters:**  
+When a Jupyter notebook runs `import services.llm_client`, Python loads the module into memory and caches it. If you edit the `.py` file afterwards, Jupyter keeps using the cached version — it does not detect or reload the change. The fix only takes effect after restarting the kernel (which clears the cache) and re-running all cells. This applies to any `.py` file imported by the notebook, not just `llm_client`.
+
+**The rule:** Changed a `.py` file that a running notebook imports? Restart the kernel before re-running.
+
+---
+
+### 13. Leading spaces before `#` break Markdown headings
+
+**The bug:**
+```python
+question_text += (f"\n\n ### Question {idx+1}: \n\n {question}\n\n")
+```
+
+The output rendered as plain text rather than a heading, producing a flat block instead of three separate sections.
+
+**The fix:**
+```python
+question_text += (f"\n\n### Question {idx+1}:\n\n{question}\n\n")
+```
+
+**Why it matters:**  
+Markdown heading syntax (`#`, `##`, `###`) only works when the `#` characters appear at the very start of the line. Any leading whitespace — even a single space — causes the parser to treat the line as plain text. This is easy to miss when building strings with f-strings, where indentation inside the string literal becomes part of the output.
+
+---
+
+### 12. `=+` is not `+=` — operator typos produce silent wrong behaviour
+
+**The bug:**
+```python
+log_entry_Date = datetime.date(2026, 4, 1)
+
+for current_recording in recordings:
+    process_log_entry(log_entry_Date, current_recording)
+    log_entry_Date =+ 1   # intended +=, actually assigns unary +1
+```
+
+After the first iteration `log_entry_Date` silently became the integer `1`, so every subsequent log entry was written to the database with `entry_date = 1` instead of the next calendar date.
+
+**The fix:**
+```python
+log_entry_Date += datetime.timedelta(days=1)
+```
+
+**Why it matters:**  
+`=+` is valid Python — it means "assign the unary positive of the right-hand side", so `x =+ 1` is the same as `x = 1`. No error is raised, the loop keeps running, and the damage (corrupt database rows) only becomes visible later. When incrementing dates, always use `timedelta`; never use bare integer arithmetic on `date` objects.
 
 ---

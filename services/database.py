@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 import os
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -116,3 +116,65 @@ def api_health_check():
             "Log Count":results[0] # pyright: ignore[reportOptionalSubscript]
         }
         return response
+    
+def api_get_segments():
+    """
+        Get a straight dump of the segments table for the admin panel.
+    """
+    with Session() as session:
+        results = session.execute(
+            text("""
+                 SELECT *
+                 FROM log_segment
+                 """)
+        ).fetchall()
+
+    return results
+
+def api_get_enrichments():
+    """
+        Get a straight dump of the enrichments table for the admin panel.
+    """
+    with Session() as session:
+        results = session.execute(
+            text("""
+                 SELECT *
+                 FROM log_enrichment
+                 """)
+        ).fetchall()
+    return results
+
+def api_delete_log_entry(log_id:int):
+    pass
+
+def get_weekly_transcripts(start_date:date, end_date:date):
+    """
+    Returns the transcripts for a given range.
+    """
+    transcripts_result = ''
+    with Session() as session:
+        results = session.execute(
+                    text("""
+                        SELECT id, entry_date
+                        FROM log_entry
+                        WHERE entry_date BETWEEN :start_dt AND :end_dt
+                        """),
+                        {"start_dt": start_date,
+                         "end_dt": end_date}
+                ).fetchall()
+        
+        for result in results:
+            transcripts_result += f'Entry for {result[1]}:\n'
+            transcripts = session.execute(
+                text("""
+                     SELECT id, log_entry_id, raw_transcript
+                     FROM log_segment
+                     WHERE log_entry_id = :log_id
+                     """),
+                     {"log_id": result[0]}
+            ).fetchall()
+            
+            for transcript in transcripts:
+                transcripts_result += transcript[2]
+            transcripts_result += '\n\n'
+    return transcripts_result
