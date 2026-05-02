@@ -200,15 +200,15 @@ After recording, 3–5 contextual follow-up questions appear in the terminal and
 
 ### Tasks
 - [ ] Install Streamlit and a browser audio component: `pip install streamlit streamlit-audiorecorder`
-- [ ] Create `app.py` at the project root and confirm it runs with `streamlit run app.py`
+- [X] Create `app.py` at the project root and confirm it runs with `streamlit run app.py`
 - [ ] Build a **Record & Process** page:
   - Accept audio via `streamlit-audiorecorder` (browser mic) or `st.file_uploader` (upload a `.wav`/`.m4a` from disk)
   - Wire the audio through `services/transcriber.py` → `services/llm_client.py` → `services/database.py`
   - Display the transcript, formatted Markdown (`st.markdown()`), and follow-up questions once processing completes
-- [ ] Build a **Today's Log** view:
+- [X] Build a **Today's Log** view:
   - Load and render today's `data/logs/YYYY-MM-DD.md` on page load
   - Show follow-up questions below the entry
-- [ ] Build a **Log History** page:
+- [X] Build a **Log History** page:
   - Query the database for all log entries, newest first
   - Clicking an entry renders its Markdown and questions
 
@@ -236,7 +236,7 @@ Open `http://localhost:8501`, record or upload audio, and see the formatted log 
   - Note what went well vs. what didn't
 - [X] Write `services/weekly_reviewer.py` (Added to the llm file instead)
 - [ ] Save the summary to `data/logs/week-YYYY-WW.md` and to the database
-- [ ] Add a **Weekly Review** page to the Streamlit app with a "Generate this week's review" button that calls the LLM and renders the result with `st.markdown()`
+- [X] Add a **Weekly Review** page to the Streamlit app with a "Generate this week's review" button that calls the LLM and renders the result with `st.markdown()`
 - [ ] (Optional) Use **APScheduler** to trigger the review automatically every Sunday evening
 
 ### Exit Criteria

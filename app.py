@@ -1,6 +1,7 @@
 import streamlit as st
 from datetime import date, timedelta
 import pathlib
+import services.controller as ctrl
 
 # st.set_page_config must be the first Streamlit call in the file.
 st.set_page_config(
@@ -34,38 +35,15 @@ def new_log():
         st.audio(uploaded_file)
 
         if st.button("Process recording"):
-            # Replace this block with the real pipeline once wired up:
-            #
-            # import tempfile, os
-            # from services import transcriber, llm_client, database
-            #
-            # with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            #     tmp.write(uploaded_file.read())
-            #     tmp_path = tmp.name
-            #
-            # with st.spinner("Transcribing..."):
-            #     transcript, duration = transcriber.transcribe_audio(tmp_path)
-            #
-            # with st.spinner("Formatting with LLM..."):
-            #     markdown_out = llm_client.llm_formatter(transcript)
-            #
-            # with st.spinner("Generating follow-up questions..."):
-            #     questions = llm_client.llm_question_generator(markdown_out)
-            #
-            # today = date.today().isoformat()
-            # entry_id = database.create_or_get_log_header(today)
-            # database.create_log_segment(entry_id, uploaded_file.name, duration, transcript)
-            # database.create_log_enrichment(entry_id, markdown_out, questions)
-            #
-            # LOGS_DIR.mkdir(parents=True, exist_ok=True)
-            # log_file = LOGS_DIR / f"{today}.md"
-            # with open(log_file, "w", encoding="utf-8") as f:
-            #     f.write(markdown_out)
-            #     f.write(f"\n\n## Follow-up questions\n\n{questions}")
-            #
-            # st.success("Done! Switch to Today's Log to see the result.")
-
-            st.info("Pipeline not wired up yet — see the commented block above in app.py.")
+            import tempfile, os
+            
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                tmp.write(uploaded_file.read())
+                tmp_path = tmp.name
+            
+            ctrl.process_log_entry(tmp_path,date.today().strftime("%Y-%m-%d"))
+            
+            st.success("Done! Switch to Today's Log to see the result.")
 
 def todays_log():
 
@@ -117,16 +95,10 @@ def weekly_review():
 
     if st.button("Generate this week's review"):
         if len(date_range) == 2:
-            start_date, end_date = date_range
-            transcripts = get_weekly_transcripts(start_date, end_date)
-            #st.text(transcripts)
-
-            from services import llm_client, database
             with st.spinner("Asking the LLM for a weekly summary..."):
-                summary = llm_client.weekly_review(transcripts)
+                start_date, end_date = date_range
+                summary = ctrl.weekly_review(start_date, end_date)
             st.markdown(summary)
-        else:
-            st.info("Weekly review not wired up yet — see the commented block above in app.py.")
 
 def admin_panel():
 

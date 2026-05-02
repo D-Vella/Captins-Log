@@ -1,10 +1,10 @@
 import json
+from services.config import LLM_ENDPOINT
 
 
 def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
     import requests
 
-    # model is served on http://localhost:11434
     payload = {
         "model": "gemma4:e4b",
         "stream": False,
@@ -18,7 +18,7 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
     if format == "json":
         payload["format"] = "json"
 
-    api_response = requests.post('http://localhost:11434/api/chat',json=payload)
+    api_response = requests.post(f'{LLM_ENDPOINT}/api/chat',json=payload)
 
     import json
     returnMessages = api_response.text.splitlines()

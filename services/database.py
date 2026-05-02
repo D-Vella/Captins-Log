@@ -1,10 +1,9 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timezone, date
-import os
+from services.config import DATABASE_PATH
 
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE_URL = f"sqlite:///{_BASE_DIR}/db/application.db"
+DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -65,6 +64,38 @@ def create_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str
              "qs": followup_qs, "now": datetime.now(timezone.utc)}
         )
         session.commit()
+
+def update_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str) -> None:
+    with Session() as session:
+        session.execute(
+            text("""UPDATE log_enrichment 
+                    SET formatted_md = :md, 
+                        followup_qs = :qs, 
+                        generated_at = :now
+                    WHERE log_entry_id = :entry_id
+                 """),
+            {"entry_id": log_entry_id, "md": formatted_md,
+             "qs": followup_qs, "now": datetime.now(timezone.utc)}
+        )
+        session.commit()
+
+def upsert_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str) -> None:
+    #check if entry already exists
+    with Session() as session:
+        existing_count = session.execute(
+            text("""
+                 SELECT count(log_entry_id)
+                 FROM log_enrichment
+                 WHERE log_entry_id = :log_id
+                 """),
+                 {"log_id":log_entry_id}
+        ).fetchone()
+
+    if existing_count == 0:
+        create_log_enrichment(log_entry_id, formatted_md, followup_qs)
+    else:
+        update_log_enrichment(log_entry_id, formatted_md, followup_qs)
+
 
 def api_get_logs(log_id:str):
     """
@@ -165,16 +196,24 @@ def get_weekly_transcripts(start_date:date, end_date:date):
         
         for result in results:
             transcripts_result += f'Entry for {result[1]}:\n'
-            transcripts = session.execute(
+            transcripts_result += get_unified_transcripts(log_id=result[0])
+            transcripts_result += '\n\n'
+    return transcripts_result
+
+def get_unified_transcripts(log_id:int) -> str:
+    transcripts_result = ''
+    with Session() as session:
+        transcripts = session.execute(
                 text("""
                      SELECT id, log_entry_id, raw_transcript
                      FROM log_segment
                      WHERE log_entry_id = :log_id
                      """),
-                     {"log_id": result[0]}
+                     {"log_id": log_id}
             ).fetchall()
             
-            for transcript in transcripts:
-                transcripts_result += transcript[2]
-            transcripts_result += '\n\n'
+    for transcript in transcripts:
+        transcripts_result += transcript[2]
+    transcripts_result += '\n\n'
+
     return transcripts_result
