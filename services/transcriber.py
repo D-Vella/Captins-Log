@@ -1,4 +1,15 @@
 def transcribe_audio(file_path) -> tuple[str, int]:
+    """Transcribes an audio file into text.
+
+    Args:
+        file_path (str): Path to the audio file to be transcribed.
+
+    Returns:
+        tuple[str, int]: A tuple containing the transcribed text and the duration of the audio in seconds.
+
+    Raises:
+        ValueError: If there's an error probing the audio file or if the transcription is empty.
+    """
     from faster_whisper import WhisperModel
     import ffmpeg
     try:
@@ -15,7 +26,7 @@ def transcribe_audio(file_path) -> tuple[str, int]:
     for segment in segments:
         transcription += segment.text + " "
 
-    if transcription == None:
+    if not transcription.strip():
         raise ValueError("Transcription is empty. Please check the audio file and transcription process.")
     else:
         print("✅ Transcription completed successfully with length: " + str(len(transcription)) + " characters.")

@@ -212,6 +212,13 @@ After recording, 3–5 contextual follow-up questions appear in the terminal and
   - Query the database for all log entries, newest first
   - Clicking an entry renders its Markdown and questions
 
+- [ ] Refactor `app.py` into a multi-page structure — move each view into its own file under a `pages/` folder:
+  - `pages/1_Record.py` — Record & Process page
+  - `pages/2_Today.py` — Today's Log view
+  - `pages/3_History.py` — Log History page
+  - `pages/4_Weekly_Review.py` — Weekly Review page (currently in app.py)
+  - Keep `app.py` as a thin entry point (title, sidebar config, shared state setup only)
+
 ### Tips
 - Streamlit reruns the entire script on every interaction — use `st.session_state` to hold in-progress values (e.g. the transcript while the LLM is still formatting)
 - Wrap slow operations in `st.spinner("Transcribing…")` and `st.spinner("Asking the LLM…")` so the UI doesn't look frozen
