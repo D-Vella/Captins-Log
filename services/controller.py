@@ -22,7 +22,6 @@ def process_log_entry(audio_path: str, entry_date: str) -> dict:
     entry_id = database.create_or_get_log_header(entry_date)
 
     # Step 3 - Database: save segment, get unified transcript
-    # TODO - need to sort the proper saving of the file path. Currently it is wrong.
     segment_id = database.create_log_segment(entry_id, audio_path, audio_duration, transcript)
     unified_transcript = database.get_unified_transcripts(entry_id)
     save_uploaded_audio(audio_path, f'{entry_date}-{segment_id}.wav')
@@ -36,9 +35,15 @@ def process_log_entry(audio_path: str, entry_date: str) -> dict:
     # Step 6 - Database: save enrichment
     database.upsert_log_enrichment(entry_id, formatted_md, questions)
 
+    md_file_contents = f"# Diary Entry for {entry_date}\n\n"
+    md_file_contents += formatted_md
+    md_file_contents += "\n\n---\n\n"
+    md_file_contents += "## Follow-up Questions\n\n"
+    md_file_contents += questions
+
     # Step 7 - Write markdown file
     file_path = LOGS_DIR / f"{entry_date}.md"
-    file_path.write_text(formatted_md, encoding="utf-8")
+    file_path.write_text(md_file_contents, encoding="utf-8")
 
     return {
         "entry_id": entry_id,

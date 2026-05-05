@@ -48,7 +48,7 @@ def create_or_get_log_header(entry_date: str) -> int:
             {"date": entry_date}
         ).fetchone()[0] # pyright: ignore[reportOptionalSubscript]
 
-def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: float, raw_transcript: str) -> str:
+def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: float, raw_transcript: str) -> int:
     """
     Creates a new log segment associated with a log entry.
     Args:
@@ -57,7 +57,7 @@ def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: fl
         duration_secs (float): The duration of the audio segment in seconds.
         raw_transcript (str): The raw transcript text of the audio segment.
     Returns:
-        str: Concatenated transcript of all segments for the log entry, or the raw transcript if none exist.
+        int: The ID of the newly created log segment row.
     """
     with Session() as session:
         session.execute(
@@ -68,14 +68,9 @@ def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: fl
              "now": datetime.now(timezone.utc)}
         )
         session.commit()
+        segment_id = session.execute(text("SELECT last_insert_rowid()")).scalar()
         print(f"✅ Log segment created for entry ID: {log_entry_id}")
-
-        result = session.execute(
-            text("SELECT GROUP_CONCAT(raw_transcript, ' ') FROM log_segment WHERE log_entry_id = :entry_id"),
-            {"entry_id": log_entry_id}
-        ).fetchone()
-
-        return result[0] if result else raw_transcript
+        return segment_id
 
 def create_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str) -> None:
     """

@@ -9,6 +9,11 @@ import services.controller as ctrl
 from typing import cast
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
+live_recording = st.audio_input(label="Record a voice message", sample_rate=16000)
+
+if live_recording:
+    st.audio(live_recording, sample_rate=16000)
+
 st.title("New Recording")
 st.caption("Upload an audio file to transcribe and log.")
 
@@ -27,10 +32,14 @@ if st.button("Process recording"):
         
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
         # Cast to UploadedFile to satisfy type checker
-        file = cast(UploadedFile, uploaded_file)
+        if live_recording:
+            file = cast(UploadedFile, live_recording)
+        else:
+            file = cast(UploadedFile, uploaded_file)
         tmp.write(file.read())
         tmp_path = tmp.name
         
     ctrl.process_log_entry(tmp_path, date.today().strftime("%Y-%m-%d"))
     
     st.success("Done! Switch to Today's Log to see the result.")
+    st.cache_data.clear()  # Clear cache to ensure new entry is loaded  
