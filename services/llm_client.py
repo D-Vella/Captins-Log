@@ -95,3 +95,15 @@ def weekly_review(prompt: str) ->str:
         print("✅ Weekly review generation completed successfully with length: " + str(len(weekly_review_response)) + " characters.")
 
     return weekly_review_response
+
+def transcription_cleanup(prompt: str) -> str:
+    cleanup_prompt = """
+        You will be given a raw transcript of a diary like entry. Your job is to clean up the transcript by removing any speech-to-text artefacts ("um", "uh", false starts), fixing any punctuation, capitalisation and spacing issues, while preserving the speaker's voice and meaning. The cleaned up transcript should be easy to read and accurately reflect the content of the original transcript.
+    """
+    cleanup_response = call_llm_api(prompt=prompt, system=cleanup_prompt, format="markdown")
+    if cleanup_response == None:
+        raise ValueError("LLM API call for transcription cleanup failed. Aborting process.")
+    else:
+        print("✅ Transcription cleanup completed successfully with length: " + str(len(cleanup_response)) + " characters.")
+    
+    return cleanup_response
