@@ -25,3 +25,16 @@ if st.button("Generate this week's review"):
             start_date, end_date = date_range
             summary = ctrl.weekly_review(start_date, end_date)
         st.markdown(summary)
+
+st.divider()
+st.header("Past Weekly Reviews")
+
+@st.cache_data #no point in reloading this every time the page rerenders.
+def load_weekly_reviews():
+    return ctrl.get_weekly_reviews()
+
+reviews = load_weekly_reviews()
+if reviews:
+    for week_range, summary in reviews.items():
+        with st.expander(week_range):
+            st.markdown(summary)

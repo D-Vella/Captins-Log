@@ -6,10 +6,23 @@ from services import transcriber, database, llm_client
 from datetime import date
 import os
 
+def get_weekly_reviews() -> dict:
+    # This will return a dict of all the weekly reviews that have been generated, with the key as the week range and the value as the summary.
+    reviews = {}
+    for file in os.listdir(LOGS_DIR):
+        if file.startswith("Review") and file.endswith(".md"):
+            week_range = file[len("Review "):-len(".md")]
+            reviews[week_range] = (LOGS_DIR / file).read_text(encoding="utf-8")
+    return reviews
+
 def weekly_review(start_date:date, end_date:date) -> str:
     # Gathers the transcripts and returns the LLMs output.
     transcripts = database.get_weekly_transcripts(start_date, end_date)
     summary = llm_client.weekly_review(transcripts)
+    entry_week = f"Review {start_date.isoformat()} to {end_date.isoformat()}"
+    file_path = LOGS_DIR / f"{entry_week}.md"
+    file_path.write_text(summary, encoding="utf-8")
+
     return summary
 
 def process_log_entry(audio_path: str, entry_date: str) -> dict:

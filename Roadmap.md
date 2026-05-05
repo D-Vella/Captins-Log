@@ -242,8 +242,10 @@ Open `http://localhost:8501`, record or upload audio, and see the formatted log 
   - List any outstanding actions mentioned but not resolved
   - Note what went well vs. what didn't
 - [X] Write `services/weekly_reviewer.py` (Added to the llm file instead)
-- [ ] Save the summary to `data/logs/week-YYYY-WW.md` and to the database
+- [X] Save the summary to `data/logs/week-YYYY-WW.md`
+- [ ] Add the weekly review to the database.
 - [X] Add a **Weekly Review** page to the Streamlit app with a "Generate this week's review" button that calls the LLM and renders the result with `st.markdown()`
+- [X] Add a section in the above page to see previously generated reviews.
 - [ ] (Optional) Use **APScheduler** to trigger the review automatically every Sunday evening
 
 ### Exit Criteria
@@ -263,6 +265,7 @@ Clicking the button in the Streamlit app generates and displays a weekly summary
 - [ ] Write a `README.md` with setup instructions (you'll thank yourself later)
 - [ ] Consider audio file compression to manage storage over time (FFmpeg + Python subprocess)
 - [ ] Add log export — zip of all Markdown files available as a download via `st.download_button()`
+- [X] Add a transcription feature so you can use these features elsewhere.
 
 ---
 
