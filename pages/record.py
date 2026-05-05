@@ -9,12 +9,16 @@ import services.controller as ctrl
 from typing import cast
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
+st.title("Record a new log entry")
+
+st.header("Live Recording",divider=True)
 live_recording = st.audio_input(label="Record a voice message", sample_rate=16000)
 
 if live_recording:
     st.audio(live_recording, sample_rate=16000)
 
-st.title("New Recording")
+
+st.header("Upload a recording",divider=True)
 st.caption("Upload an audio file to transcribe and log.")
 
 uploaded_file = st.file_uploader(
@@ -41,6 +45,6 @@ if st.button("Process recording"):
         
     ctrl.process_log_entry(tmp_path, date.today().strftime("%Y-%m-%d"))
     
-    st.success("Done! Switch to Today's Log to see the result.")
+    #st.success("Done! Switch to Today's Log to see the result.")
     st.cache_data.clear()  # Clear cache to ensure new entry is loaded  
-    st.switch_page("todays_log")
+    st.switch_page("pages/todays_log.py")

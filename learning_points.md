@@ -227,6 +227,34 @@ Markdown heading syntax (`#`, `##`, `###`) only works when the `#` characters ap
 
 ---
 
+### 15. Streamlit nested buttons don't work — use session state for confirmation flows
+
+**The bug:**
+```python
+if st.button("Rebuild Database"):
+    st.warning("Are you sure?")
+    if st.button("Yes"):       # this button never fires
+        rebuild_database()
+```
+
+**The fix:**
+```python
+if st.button("Rebuild Database"):
+    st.session_state.confirm_rebuild = True
+
+if st.session_state.confirm_rebuild:
+    st.warning("Are you sure?")
+    if st.button("Yes, rebuild it"):
+        rebuild_database()
+        st.session_state.confirm_rebuild = False
+        st.rerun()
+```
+
+**Why it matters:**  
+Every interaction in Streamlit triggers a full page rerun from top to bottom. When you click "Rebuild Database", the page reruns and renders the inner "Yes" button — but `st.button` returns `True` only on the *single rerun* caused by that click. On the next rerun (when the user clicks "Yes"), `st.button("Rebuild Database")` returns `False`, so the entire inner block never executes and the "Yes" click is silently ignored. The correct pattern is to set a session state flag when the first button is clicked, then render the confirmation UI based on that flag. Session state persists across reruns, so the confirmation prompt stays visible until explicitly cleared.
+
+---
+
 ### 12. `=+` is not `+=` — operator typos produce silent wrong behaviour
 
 **The bug:**
