@@ -14,6 +14,7 @@ from services.database import (
     api_delete_log_entry
 )
 from typing import cast
+from services.controller import rebuild_database
 
 st.info("Currently implementing.")
 
@@ -23,6 +24,9 @@ if "admin_selected_entry" not in st.session_state:
 
 if "admin_confirm_delete" not in st.session_state:
     st.session_state.admin_confirm_delete = False
+
+if "admin_confirm_rebuild" not in st.session_state:
+    st.session_state.admin_confirm_rebuild = False
 # endregion
 
 # region ── Data Loaders ───────────────────────────────────
@@ -127,6 +131,37 @@ def render_entry_management(headers):
             if st.button("Cancel"):
                 st.session_state.admin_confirm_delete = False
                 st.rerun()
+
+def render_data_rebuild():
+    st.subheader("Data Rebuild")
+
+    st.info(
+        "This will clear all existing data and reprocess the log files from "
+        "the source directory. Use this if you suspect data corruption or want "
+        "to refresh the database with new log files."
+    )
+
+    if st.button("Rebuild Database", type="primary"):
+        st.session_state.admin_confirm_rebuild = True
+
+    if st.session_state.admin_confirm_rebuild:
+        st.warning("Are you sure you want to rebuild the database? This cannot be undone.")
+
+        col_confirm, col_cancel = st.columns(2)
+
+        with col_confirm:
+            if st.button("Yes, rebuild it", type="primary"):
+                with st.spinner("Rebuilding database..."):
+                    rebuild_database()
+                st.cache_data.clear()
+                st.session_state.admin_confirm_rebuild = False
+                st.rerun()
+
+        with col_cancel:
+            if st.button("Cancel"):
+                st.session_state.admin_confirm_rebuild = False
+                st.rerun()
+
 # endregion
 
 # region ── Page ─────────────────────────────────────────────
@@ -144,3 +179,5 @@ enrichments = load_enrichments()
 render_overview(headers, segments, enrichments)
 render_table_viewer(headers, segments, enrichments)
 render_entry_management(headers)
+render_data_rebuild()
+# endregion

@@ -9,10 +9,10 @@ import services.controller as ctrl
 from datetime import date
 import pathlib
 
-today = date.today().isoformat()
-st.title(f"Today's Log — {today}")
+st.title(f"Today's Log:")
 
 LOGS_DIR = pathlib.Path(__file__).parent.parent / "data" / "logs"
+today = date.today().isoformat()
 log_file = LOGS_DIR / f"{today}.md"
 
 if log_file.exists():

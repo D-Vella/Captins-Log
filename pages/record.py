@@ -43,3 +43,4 @@ if st.button("Process recording"):
     
     st.success("Done! Switch to Today's Log to see the result.")
     st.cache_data.clear()  # Clear cache to ensure new entry is loaded  
+    st.switch_page("todays_log")
