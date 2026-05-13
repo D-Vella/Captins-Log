@@ -213,3 +213,6 @@ data/audio/
 
 #sqlite db files:
 *.db
+
+#certificates:
+*.pem
