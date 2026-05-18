@@ -25,11 +25,14 @@ def weekly_review(start_date:date, end_date:date) -> str:
 
     return summary
 
-def process_log_entry(audio_path: str, entry_date: str) -> dict:
+def process_log_entry(audio_path: str, entry_date: str, on_progress=None) -> dict:
     ensure_directories() #Make sure the place to save the files exists.
     
     # Step 1 - Transcribe
     transcript, audio_duration = transcriber.transcribe_audio(audio_path)
+
+    if on_progress:
+        on_progress(0.3, "Transcription complete, saving to database...")
 
     # Step 2 - Database: create or get the day's header
     entry_id = database.create_or_get_log_header(entry_date)
@@ -39,8 +42,14 @@ def process_log_entry(audio_path: str, entry_date: str) -> dict:
     unified_transcript = database.get_unified_transcripts(entry_id)
     save_uploaded_audio(audio_path, f'{entry_date}-{segment_id}.wav')
 
+    if on_progress:
+        on_progress(0.5, "Files saved, calling LLM...")
+
     # Step 4 - LLM: format to markdown
     formatted_md = llm_client.llm_formatter(unified_transcript)
+
+    if on_progress:
+        on_progress(0.7, "Files saved, generating questions...")
 
     # Step 5 - LLM: generate follow-up questions
     questions = llm_client.llm_question_generator(formatted_md)
@@ -54,9 +63,15 @@ def process_log_entry(audio_path: str, entry_date: str) -> dict:
     md_file_contents += "## Follow-up Questions\n\n"
     md_file_contents += questions
 
+    if on_progress:
+        on_progress(0.9, "Markdown file generated.")
+
     # Step 7 - Write markdown file
     file_path = LOGS_DIR / f"{entry_date}.md"
     file_path.write_text(md_file_contents, encoding="utf-8")
+
+    if on_progress:
+        on_progress(1.0, "All steps complete!")
 
     return {
         "entry_id": entry_id,

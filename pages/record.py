@@ -49,8 +49,12 @@ with col_controls:
                 file = cast(UploadedFile, uploaded_file)
             tmp.write(file.read())
             tmp_path = tmp.name
-            
-        ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"))
+        
+        progress_bar = st.progress(0, text="Starting transcription...")
+        status = st.empty()
+        def update_progress(percent, message):
+            progress_bar.progress(percent, text=message)
+        ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"), on_progress=update_progress)
         
         #st.success("Done! Switch to Today's Log to see the result.")
         st.cache_data.clear()  # Clear cache to ensure new entry is loaded  

@@ -282,6 +282,33 @@ log_entry_Date += datetime.timedelta(days=1)
 
 ---
 
+### 17. `shutil.copy2` raises WinError 32 when source and destination are the same file
+
+**The situation:**  
+`save_uploaded_audio()` uses `shutil.copy2(source, destination)` to move audio files into `RECORDINGS_DIR`. During a database rebuild, the source files are already in `RECORDINGS_DIR`, so the source and destination paths resolved to the same file. On Windows this raises a cryptic `[WinError 32] The process cannot access the file because it is being used by another process` — not the "same file" error you'd expect.
+
+The existing guard only checked whether to *delete* the original after copying — it never prevented the copy itself from running:
+```python
+shutil.copy2(audio_file, DESTINATION_PATH)          # crashes if same file
+if audio_file.startswith(str(RECORDINGS_DIR)):
+    os.remove(audio_file)                           # delete guard, too late
+```
+
+**The fix:**
+```python
+if os.path.abspath(audio_file) == os.path.abspath(DESTINATION_PATH):
+    return DESTINATION_PATH   # same file — nothing to do
+
+shutil.copy2(audio_file, DESTINATION_PATH)
+```
+
+**Why it matters:**  
+Two lessons here. First, Windows surfaces the "same file" copy error as a file-locking error (WinError 32), not a "same path" error — which sent debugging down the wrong track entirely. Print statements showing the source and destination paths are what revealed the real cause.
+
+Second, always compare paths with `os.path.abspath()` rather than raw string equality. Paths can look different on the surface (`./recordings/file.wav` vs `C:\project\recordings\file.wav`) but resolve to the same location. String comparison would miss those cases; `abspath` normalises both before comparing.
+
+---
+
 ### 16. Use a callback to report progress from a function without coupling it to the UI
 
 **The situation:**  
