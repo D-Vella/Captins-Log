@@ -5,6 +5,7 @@ from services.config import LOGS_DIR, RECORDINGS_DIR, ensure_directories
 from services import transcriber, database, llm_client
 from datetime import date
 import os
+import shutil
 
 def get_weekly_reviews() -> dict:
     # This will return a dict of all the weekly reviews that have been generated, with the key as the week range and the value as the summary.
@@ -65,37 +66,30 @@ def process_log_entry(audio_path: str, entry_date: str) -> dict:
         "questions": questions
     }
 
-def save_uploaded_audio(audio_file, file_name:str) -> str:
-    # This will allow the user to upload audio to the UI and it will be saved in the right place with the right name.
-    # Returns True if successful
-    import shutil
+def save_uploaded_audio(audio_file: str, file_name: str) -> str:
+    destination = os.path.join(RECORDINGS_DIR, file_name)
 
-    DESTINATION_PATH = os.path.join(RECORDINGS_DIR, file_name)
+    abs_source = os.path.normcase(os.path.abspath(audio_file))
+    abs_dest = os.path.normcase(os.path.abspath(destination))
+    recordings_norm = os.path.normcase(os.path.abspath(str(RECORDINGS_DIR)))
+
+    # File is already in the recordings folder — nothing to copy or delete.
+    # This happens during rebuild_database() where the source IS the recording.
+    if abs_source == abs_dest or abs_source.startswith(recordings_norm + os.sep):
+        return audio_file
 
     try:
-        # This line does the actual work: copying and renaming
-        shutil.copy2(audio_file, DESTINATION_PATH)
-        
-        # Remove the original file if it's in the source directory to avoid duplicates.
-        # This will also ensure the file naming is correct to the database in the event of a database rebuild.
-        if audio_file.startswith(str(RECORDINGS_DIR)):
-            os.remove(audio_file)  
-
+        shutil.copy2(audio_file, destination)
         print("-" * 40)
-        print(f"✅ Success! File copied and renamed.")
-        print(f"   Source: {audio_file}")
-        print(f"   Destination: {DESTINATION_PATH}")
-
+        print(f"✅ Audio saved to recordings.")
+        print(f"   Source:      {audio_file}")
+        print(f"   Destination: {destination}")
     except FileNotFoundError:
-        print("❌ Error: Source file not found. Please check the SOURCE_PATH.")
-    except FileExistsError:
-        # This case handles if the destination path is a directory itself, 
-        # or if the destination file already exists and we aren't careful.
-        print(f"⚠️ Warning: Could not copy. The destination path might already exist.")
+        print("❌ Error: Source file not found.")
     except Exception as e:
         print(f"❌ An unexpected error occurred: {e}")
 
-    return DESTINATION_PATH
+    return destination
 
 def transcribe_audio(audio_file) -> str:
     # This will transcribe some given audio and return the string.
@@ -113,7 +107,7 @@ def rebuild_database(on_progress=None):
         if file.endswith('.md'):
             os.unlink(os.path.join(LOGS_DIR, file))  # Delete the markdown files to avoid orphaned files
 
-    wav_files = [f for f in os.listdir(RECORDINGS_DIR) if f.endswith('.wav')]
+    wav_files = sorted([f for f in os.listdir(RECORDINGS_DIR) if f.endswith('.wav')])
     total = len(wav_files)
 
     for i, file in enumerate(wav_files):

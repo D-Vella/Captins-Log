@@ -40,21 +40,22 @@ with col_controls:
     if st.button("Process recording"):
         import tempfile, os
         from datetime import date
-            
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            # Cast to UploadedFile to satisfy type checker
-            if live_recording:
-                file = cast(UploadedFile, live_recording)
-            else:
-                file = cast(UploadedFile, uploaded_file)
-            tmp.write(file.read())
-            tmp_path = tmp.name
-            
-        ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"))
-        
-        #st.success("Done! Switch to Today's Log to see the result.")
-        st.cache_data.clear()  # Clear cache to ensure new entry is loaded  
-        st.switch_page("pages/todays_log.py")
+
+        if not live_recording and not uploaded_file:
+            st.warning("Please record or upload audio before processing.")
+        else:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                file = cast(UploadedFile, live_recording if live_recording else uploaded_file)
+                tmp.write(file.read())
+                tmp_path = tmp.name
+
+            try:
+                ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"))
+            finally:
+                os.unlink(tmp_path)
+
+            st.cache_data.clear()  # Clear cache to ensure new entry is loaded
+            st.switch_page("pages/todays_log.py")
 
     # Display today's log entry if it exists
     st.header("Today's log entry",divider=True)
