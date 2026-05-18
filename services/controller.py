@@ -73,11 +73,16 @@ def save_uploaded_audio(audio_file, file_name:str) -> str:
     DESTINATION_PATH = os.path.join(RECORDINGS_DIR, file_name)
 
     try:
-        # This line does the actual work: copying and renaming
+        print(f"Source audio file: {audio_file}")
+        print(f"Destination path: {DESTINATION_PATH}")
+
+        if os.path.abspath(audio_file) == os.path.abspath(DESTINATION_PATH):
+            print("ℹ️ Source and destination are the same file — skipping copy.")
+            return DESTINATION_PATH
+
         shutil.copy2(audio_file, DESTINATION_PATH)
-        
-        # Remove the original file if it's in the source directory to avoid duplicates.
-        # This will also ensure the file naming is correct to the database in the event of a database rebuild.
+
+        # Remove the original if it was already in RECORDINGS_DIR (i.e. a rename during rebuild).
         if audio_file.startswith(str(RECORDINGS_DIR)):
             os.remove(audio_file)  
 

@@ -12,8 +12,6 @@ def transcribe_audio(file_path) -> tuple[str, int]:
     """
     from faster_whisper import WhisperModel
     import ffmpeg
-    import numpy as np
-
     try:
         audio = ffmpeg.probe(file_path)
     except Exception as e:
@@ -21,25 +19,9 @@ def transcribe_audio(file_path) -> tuple[str, int]:
 
     audio_duration = int(float(audio['format']['duration']))
 
-    # Decode audio to a numpy array via ffmpeg pipe so the file handle is
-    # released before faster_whisper (CTranslate2) ever touches it.
-    # Passing a file path to model.transcribe() causes a Windows file lock
-    # (WinError 32) that prevents copying the file afterwards.
-    try:
-        raw, _ = (
-            ffmpeg
-            .input(file_path)
-            .output('pipe:', format='f32le', acodec='pcm_f32le', ac=1, ar='16000')
-            .run(capture_stdout=True, capture_stderr=True)
-        )
-    except ffmpeg.Error as e:
-        raise ValueError(f"Error decoding audio file: {e}")
-
-    audio_array = np.frombuffer(raw, np.float32)
-
     transcription = ""
     model = WhisperModel("small", device="cpu", compute_type="int8")
-    segments, _ = model.transcribe(audio_array, language="en")
+    segments, _ = model.transcribe(file_path)
 
     for segment in segments:
         transcription += segment.text + " "
