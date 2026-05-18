@@ -86,13 +86,13 @@
 
 ## Phase 7 — Streamlit UI
 
-- [ ] **Install dependencies**
+- [X] **Install dependencies**
 
   ```bash
   pip install streamlit streamlit-audiorecorder
   ```
 
-- [ ] **Create `app.py` at the project root and confirm it boots**
+- [X] **Create `app.py` at the project root and confirm it boots**
 
   ```bash
   streamlit run app.py
@@ -100,21 +100,21 @@
 
   Start with a bare `st.title("Captain's Log")` to verify the server runs before wiring in services.
 
-- [ ] **Build the Record & Process page**
+- [X] **Build the Record & Process page**
 
   Wire `streamlit-audiorecorder` (or `st.file_uploader`) → `transcriber.transcribe_audio()` → `llm_client.llm_formatter()` + `llm_client.llm_question_generator()` → `database` save → display results with `st.markdown()`.
 
   Use `st.session_state` to hold the transcript between the audio step and the LLM step so a page rerun doesn't re-trigger transcription. Wrap each slow call in `st.spinner()`.
 
-- [ ] **Build the Today's Log view**
+- [X] **Build the Today's Log view**
 
   Read `data/logs/{today}.md` from disk and render it with `st.markdown()`. If the file doesn't exist yet, show a prompt to make a recording.
 
-- [ ] **Build the Log History page**
+- [X] **Build the Log History page**
 
   Query `log_entry` records from the database, display as a list. Use `st.selectbox` or `st.radio` to pick an entry and render its Markdown.
 
-- [ ] **Test end-to-end in the browser**
+- [X] **Test end-to-end in the browser**
 
   Open `http://localhost:8501`, record or upload audio, and confirm the formatted log and follow-up questions appear.
 

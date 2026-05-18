@@ -277,3 +277,50 @@ log_entry_Date += datetime.timedelta(days=1)
 `=+` is valid Python — it means "assign the unary positive of the right-hand side", so `x =+ 1` is the same as `x = 1`. No error is raised, the loop keeps running, and the damage (corrupt database rows) only becomes visible later. When incrementing dates, always use `timedelta`; never use bare integer arithmetic on `date` objects.
 
 ---
+
+## Session 3 — 2026-05-18
+
+---
+
+### 16. Use a callback to report progress from a function without coupling it to the UI
+
+**The situation:**  
+`rebuild_database()` in `controller.py` loops through audio files and calls `process_log_entry()` for each one. The admin panel showed only a spinner — no indication of how far through the rebuild it was.
+
+The naive fix would be to put Streamlit calls (`st.progress`, `st.write`) directly inside `rebuild_database()`. That works, but it ties a backend service function to a specific UI framework — the controller can no longer be called from a script, a test, or a different page without dragging Streamlit in with it.
+
+**The fix — a progress callback:**
+```python
+# controller.py — accepts an optional function, knows nothing about Streamlit
+def rebuild_database(on_progress=None):
+    wav_files = [f for f in os.listdir(RECORDINGS_DIR) if f.endswith('.wav')]
+    total = len(wav_files)
+
+    for i, file in enumerate(wav_files):
+        if on_progress:
+            on_progress(i, total, file)   # call whatever was passed in
+        process_log_entry(...)
+
+    if on_progress:
+        on_progress(total, total, "Done")
+
+# admin_panel.py — owns the UI, passes a closure that updates it
+progress_bar = st.progress(0, text="Starting rebuild...")
+status = st.empty()
+
+def on_progress(current, total, filename):
+    pct = current / total
+    progress_bar.progress(pct, text=f"Processing {current + 1} of {total}...")
+    status.caption(f"Current file: `{filename}`")
+
+rebuild_database(on_progress=on_progress)
+```
+
+**Why it matters:**  
+This is the *callback pattern* — instead of doing the work itself, a function accepts another function as an argument and calls it at key points. The controller stays UI-agnostic: pass `None` and nothing happens; pass a logging function and it logs; pass a Streamlit closure and it updates the UI. The caller decides what "report progress" means.
+
+Two Streamlit-specific details make the live update work:
+- `st.progress(value, text=...)` renders a progress bar. Calling `.progress()` on the same object again *replaces* it in place rather than appending a new one — so the bar fills smoothly rather than stacking up.
+- `st.empty()` reserves a single placeholder slot. Calling `.caption()` (or `.write()`, `.text()`, etc.) on it overwrites whatever was there before. Without `st.empty()`, each call would append a new line of text, flooding the page.
+
+---

@@ -5,13 +5,11 @@ It reads the markdown file corresponding to today's date from the 'data/logs' di
 and renders the content for immediate viewing.
 """
 import streamlit as st
-import services.controller as ctrl
+from services.config import LOGS_DIR
 from datetime import date
-import pathlib
 
 st.title(f"Today's Log:")
 
-LOGS_DIR = pathlib.Path(__file__).parent.parent / "data" / "logs"
 today = date.today().isoformat()
 log_file = LOGS_DIR / f"{today}.md"
 

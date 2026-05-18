@@ -6,6 +6,8 @@ and save the log entry, making it available on the Today's Log page.
 """
 import streamlit as st
 import services.controller as ctrl
+from services.config import LOGS_DIR
+from datetime import date
 from typing import cast
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
@@ -14,6 +16,8 @@ st.title("Record a new log entry")
 col_controls, col_tips = st.columns(2)
 
 with col_controls:
+    st.header("Date of entry",divider=True)
+    entry_date = st.date_input("Select the date for this log entry", value=date.today())
     st.header("Live Recording",divider=True)
     live_recording = st.audio_input(label="Record a voice message", sample_rate=16000)
 
@@ -46,11 +50,21 @@ with col_controls:
             tmp.write(file.read())
             tmp_path = tmp.name
             
-        ctrl.process_log_entry(tmp_path, date.today().strftime("%Y-%m-%d"))
+        ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"))
         
         #st.success("Done! Switch to Today's Log to see the result.")
         st.cache_data.clear()  # Clear cache to ensure new entry is loaded  
         st.switch_page("pages/todays_log.py")
+
+    # Display today's log entry if it exists
+    st.header("Today's log entry",divider=True)
+    today = date.today().isoformat()
+    log_file = LOGS_DIR / f"{today}.md"
+
+    if log_file.exists():
+        st.markdown(log_file.read_text(encoding="utf-8"))
+    else:
+        st.info(f"No entry for {today} yet. Head to Record to create one.")
 
 with col_tips:
     st.divider()

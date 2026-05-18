@@ -101,9 +101,9 @@ def transcribe_audio(audio_file) -> str:
     # This will transcribe some given audio and return the string.
     return 'Not Implemented'
 
-def rebuild_database():
+def rebuild_database(on_progress=None):
     # This will clear the database and reprocess all the log files in the source directory.
-    # Use with caution! 
+    # Use with caution!
 
     # Clear the database
     database.reset_db()
@@ -113,9 +113,15 @@ def rebuild_database():
         if file.endswith('.md'):
             os.unlink(os.path.join(LOGS_DIR, file))  # Delete the markdown files to avoid orphaned files
 
-    #re process the log files from the source directory.
-    for file in os.listdir(RECORDINGS_DIR):
-        if file.endswith('.wav'):
-            audio_path = os.path.join(RECORDINGS_DIR, file)
-            entry_date = file[:10]  # Assuming filename format is "YYYY-MM-DD-segmentID.wav"
-            process_log_entry(audio_path, entry_date)
+    wav_files = [f for f in os.listdir(RECORDINGS_DIR) if f.endswith('.wav')]
+    total = len(wav_files)
+
+    for i, file in enumerate(wav_files):
+        if on_progress:
+            on_progress(i, total, file)
+        audio_path = os.path.join(RECORDINGS_DIR, file)
+        entry_date = file[:10]  # Assuming filename format is "YYYY-MM-DD-segmentID.wav"
+        process_log_entry(audio_path, entry_date)
+
+    if on_progress:
+        on_progress(total, total, "Done")

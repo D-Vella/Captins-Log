@@ -130,7 +130,7 @@ def upsert_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str
                  {"log_id":log_entry_id}
         ).fetchone()
 
-    if existing_count == 0:
+    if not existing_count or existing_count[0] == 0:
         create_log_enrichment(log_entry_id, formatted_md, followup_qs)
     else:
         update_log_enrichment(log_entry_id, formatted_md, followup_qs)
@@ -276,3 +276,51 @@ def get_unified_transcripts(log_id:int) -> str:
     transcripts_result += '\n\n'
 
     return transcripts_result
+
+def get_dated_entry_id(entry_date: str) -> int:
+    """
+    Gets the log entry id for a given date, if it exists.
+    """
+    with Session() as session:
+        result = session.execute(
+            text("""
+                 SELECT id
+                 FROM log_entry
+                 WHERE entry_date = :entry_date
+                 """),
+            {"entry_date": entry_date}
+        ).fetchone()
+        result_int = int(result[0]) if result else None
+    return result_int # type: ignore
+
+def search_logs_by_keyword(keyword: str):
+    """
+    Searches for logs that contain the specified keyword in their raw transcripts.
+    Args:
+        keyword (str): The keyword to search for within the raw transcripts of log segments.
+    Returns:
+        list: A list of log entries (dictionaries) that contain the keyword in their transcripts.
+    """
+    matching_entries = []
+    with Session() as session:
+        results = session.execute(
+            text("""
+                 SELECT le.id, le.entry_date, ls.raw_transcript, lech.formatted_md
+                 FROM log_entry le
+                    JOIN log_segment ls ON le.id = ls.log_entry_id
+                    JOIN log_enrichment lech ON le.id = lech.log_entry_id
+                 WHERE ls.raw_transcript LIKE :keyword or lech.formatted_md LIKE :keyword
+                 """),
+            {"keyword": f"%{keyword.upper()}%"}
+        ).fetchall()
+
+    for result in results:
+        entry_dict = {
+            "id": result[0],
+            "entry_date": result[1],
+            "raw_transcript": result[2],
+            "formatted_md": result[3]
+        }
+        matching_entries.append(entry_dict)
+
+    return matching_entries

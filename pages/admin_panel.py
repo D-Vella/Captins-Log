@@ -151,8 +151,21 @@ def render_data_rebuild():
 
         with col_confirm:
             if st.button("Yes, rebuild it", type="primary"):
-                with st.spinner("Rebuilding database..."):
-                    rebuild_database()
+                progress_bar = st.progress(0, text="Starting rebuild...")
+                status = st.empty()
+
+                def on_progress(current, total, filename):
+                    if total == 0:
+                        return
+                    pct = current / total
+                    if filename == "Done":
+                        progress_bar.progress(1.0, text="Rebuild complete.")
+                    else:
+                        progress_bar.progress(pct, text=f"Processing {current + 1} of {total}...")
+                        status.caption(f"Current file: `{filename}`")
+
+                rebuild_database(on_progress=on_progress)
+                status.empty()
                 st.cache_data.clear()
                 st.session_state.admin_confirm_rebuild = False
                 st.rerun()
