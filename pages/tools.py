@@ -12,6 +12,12 @@ live_recording = st.audio_input(label="Record a voice message", sample_rate=1600
 if live_recording:
     st.audio(live_recording, sample_rate=16000)
 
+mode_choice = st.selectbox(
+    "Select the processing mode",
+    options=["Transcription Cleanup", "Note Taking"],
+    help="Choose how to process the uploaded audio file."
+)
+
 if st.button("Transcribe"):
     if live_recording:
         file = live_recording
@@ -27,7 +33,7 @@ if st.button("Transcribe"):
         transcription, _ = transcribe_audio(tmp_path)
         st.text_area("Transcription:", value=transcription, height=200)
         with st.spinner("Cleaning up transcription..."):
-            cleaned_transcription = transcription_cleanup(transcription)
+            cleaned_transcription = transcription_cleanup(transcription, mode_choice=mode_choice)
         st.text_area("Post LLM Cleanup:", value=cleaned_transcription, height=200)
 
     st.cache_data.clear()

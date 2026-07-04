@@ -96,11 +96,21 @@ def weekly_review(prompt: str) ->str:
 
     return weekly_review_response
 
-def transcription_cleanup(prompt: str) -> str:
+def transcription_cleanup(prompt: str, mode_choice: str = "Transcription Cleanup") -> str:
     cleanup_prompt = """
         You will be given a raw transcript of a diary like entry. Your job is to clean up the transcript by removing any speech-to-text artefacts ("um", "uh", false starts), fixing any punctuation, capitalisation and spacing issues, while preserving the speaker's voice and meaning. The cleaned up transcript should be easy to read and accurately reflect the content of the original transcript.
     """
-    cleanup_response = call_llm_api(prompt=prompt, system=cleanup_prompt, format="markdown")
+    note_taking_prompt = """
+    You will be given a raw transcript of a dictation from an individual who is doing analysis or investigations into a given topic. Your job is to clean up any speech to text artefacts, fix punctuation, capitalization, paragraphing and spacing issues, while preserving the speaker's voice and meaning. Additionally, you are to assist with the organization of the information to help present a useful entry that can be read back at a later date. The goal here is to provide understanding and clarity of the topic at hand to someone who has been divorced from the topic in question by a matter of days. Feel free to add some additional information where it can be ascertained from the original transcription to improve clarity of the outputted text.
+"""
+
+    if mode_choice == "Transcription Cleanup":
+        system_prompt = cleanup_prompt
+    elif mode_choice == "Note Taking":
+        system_prompt = note_taking_prompt
+
+
+    cleanup_response = call_llm_api(prompt=prompt, system=system_prompt, format="markdown")
     if cleanup_response == None:
         raise ValueError("LLM API call for transcription cleanup failed. Aborting process.")
     else:
