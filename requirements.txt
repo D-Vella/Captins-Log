@@ -1,0 +1,8 @@
+faster_whisper==1.2.1
+ffmpeg_python==0.2.0
+httpx==0.28.1
+ipython==8.12.3
+pandas==3.0.3
+Requests==2.34.2
+SQLAlchemy==2.0.51
+streamlit==1.57.0

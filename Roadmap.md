@@ -361,24 +361,24 @@ hardcoded drive letters, environment-specific config — will break inside a con
 address them first. This phase is about making the app portable before containerising it.
 
 ### Tasks
-- [ ] Audit `services/config.py` for any Windows-specific paths (drive letters, backslashes)
+- [X] Audit `services/config.py` for any Windows-specific paths (drive letters, backslashes)
   — replace with `pathlib.Path` relative paths if not already done
-- [ ] Ensure `data/recordings/` and `data/logs/` are created by `ensure_directories()` at startup
+- [X] Ensure `data/recordings/` and `data/logs/` are created by `ensure_directories()` at startup
   — these will be mounted as Docker volumes
-- [ ] Move any remaining hardcoded configuration values into environment variables using `python-dotenv`:
+- [X] Move any remaining hardcoded configuration values into environment variables using `python-dotenv`:
   ```python
   # .env
   OLLAMA_PRIMARY=http://192.168.x.x:11434
   OLLAMA_FALLBACK=http://ollama:11434
   ```
-- [ ] Add `python-dotenv` loading to `services/config.py` if not already present
-- [ ] Generate a clean `requirements.txt` from your virtual environment:
+- [X] Add `python-dotenv` loading to `services/config.py` if not already present
+- [X] Generate a clean `requirements.txt` from your virtual environment:
   ```bash
   pip freeze > requirements.txt
   ```
-- [ ] Review `requirements.txt` and remove anything that is clearly a dev-only tool
+- [X] Review `requirements.txt` and remove anything that is clearly a dev-only tool
   (e.g. `ipykernel`, `nbstripout`) — these do not belong in a production container
-- [ ] Confirm the app runs cleanly from a fresh terminal with no VS Code involvement
+- [X] Confirm the app runs cleanly from a fresh terminal with no VS Code involvement
 
 ### Exit Criteria
 The app starts and runs using only environment variables for configuration. No hardcoded paths
@@ -396,7 +396,7 @@ that starts from a base OS, installs your dependencies, copies your code, and de
 start the app. You write it once and Docker uses it to produce a repeatable, portable image.
 
 ### Tasks
-- [ ] Create `Dockerfile` in the project root:
+- [X] Create `Dockerfile` in the project root:
   ```dockerfile
   FROM python:3.12-slim
 
@@ -414,7 +414,7 @@ start the app. You write it once and Docker uses it to produce a repeatable, por
        "--server.sslCertFile", "cert.pem", \
        "--server.sslKeyFile", "key.pem"]
   ```
-- [ ] Add a `.dockerignore` file to prevent unnecessary files being copied into the image:
+- [X] Add a `.dockerignore` file to prevent unnecessary files being copied into the image:
   ```
   .git
   .env
@@ -425,11 +425,11 @@ start the app. You write it once and Docker uses it to produce a repeatable, por
   notebooks/
   *.pem
   ```
-- [ ] Build the image locally on your gaming PC to confirm it builds without errors:
+- [X] Build the image locally on your gaming PC to confirm it builds without errors:
   ```bash
   docker build -t captains-log .
   ```
-- [ ] Fix any build errors before moving on — do not proceed to Compose until the image builds cleanly
+- [X] Fix any build errors before moving on — do not proceed to Compose until the image builds cleanly
 
 ### Tips
 - `python:3.12-slim` is a minimal Python image — smaller and faster to build than the full version
