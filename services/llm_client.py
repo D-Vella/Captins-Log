@@ -1,12 +1,30 @@
 import json
-from services.config import LLM_ENDPOINT
+
+import httpx
+import datetime
+from services.config import OLLAMA_PRIMARY, OLLAMA_PRIMARY_MODEL, OLLAMA_FALLBACK, OLLAMA_FALLBACK_MODEL
+
+
+def get_ollama_endpoint() -> tuple:
+      """
+        Returns the primary endpoint if reachable, otherwise returns the fallback endpoint.
+      """
+      try:
+          httpx.get(f"{OLLAMA_PRIMARY}/api/version", timeout=2)
+          print(f"Using LLM endpoint: {OLLAMA_PRIMARY}")
+          return OLLAMA_PRIMARY, OLLAMA_PRIMARY_MODEL
+      except Exception:
+          print(f"Primary endpoint unreachable. Using fallback endpoint: {OLLAMA_FALLBACK}")
+          return OLLAMA_FALLBACK, OLLAMA_FALLBACK_MODEL
 
 
 def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
     import requests
+    start_time = datetime.datetime.now()
+    LLM_ENDPOINT, LLM_MODEL = get_ollama_endpoint()
 
     payload = {
-        "model": "gemma4:e4b",
+        "model": LLM_MODEL,
         "stream": False,
         "think": False, 
         "messages": [
@@ -28,6 +46,9 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
         returnMessage = json.loads(message)
         completeMessage += returnMessage.get('message', {}).get('content', '')
 
+    end_time = datetime.datetime.now()
+    elapsed_time = (end_time - start_time).total_seconds()
+    print(f"LLM API call completed in {elapsed_time:.2f} seconds with response length: {len(completeMessage)} characters.")
     return completeMessage
 
 def llm_formatter(prompt: str) -> str:
@@ -47,7 +68,6 @@ def llm_formatter(prompt: str) -> str:
     markdown_response = call_llm_api(prompt=prompt, system=markdown_prompt, format="markdown")
     if markdown_response == None:
         raise ValueError("LLM API call for markdown formatting failed. Aborting process.")
-    else:        print("✅ Markdown formatting completed successfully with length: " + str(len(markdown_response)) + " characters.")
 
     return markdown_response
 
@@ -60,8 +80,6 @@ def llm_question_generator(prompt: str) -> str:
     questions_response = call_llm_api(prompt=prompt, system=three_questions_prompt, format="json")
     if questions_response == None:
         raise ValueError("LLM API call for question generation failed. Aborting process.")
-    else:
-        print("✅ Question generation completed successfully with length: " + str(len(questions_response)) + " characters.")
     
     if questions_response.startswith('```'):
         questions_response = questions_response.split('\n', 1)[1]
@@ -91,8 +109,6 @@ def weekly_review(prompt: str) ->str:
     weekly_review_response = call_llm_api(prompt=prompt, system=weekly_review_prompt, format="markdown")
     if weekly_review_response == None:
         raise ValueError("LLM API call for weekly review generation failed. Aborting process.")
-    else:
-        print("✅ Weekly review generation completed successfully with length: " + str(len(weekly_review_response)) + " characters.")
 
     return weekly_review_response
 
@@ -113,7 +129,5 @@ def transcription_cleanup(prompt: str, mode_choice: str = "Transcription Cleanup
     cleanup_response = call_llm_api(prompt=prompt, system=system_prompt, format="markdown")
     if cleanup_response == None:
         raise ValueError("LLM API call for transcription cleanup failed. Aborting process.")
-    else:
-        print("✅ Transcription cleanup completed successfully with length: " + str(len(cleanup_response)) + " characters.")
     
     return cleanup_response

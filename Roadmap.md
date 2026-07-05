@@ -269,6 +269,320 @@ Clicking the button in the Streamlit app generates and displays a weekly summary
 
 ---
 
+
+# Captain's Log — Dockerisation Roadmap
+
+> A phased plan to move Captain's Log from a locally-run developer setup into a containerised
+> application that runs continuously on a home mini PC, accessible from any device on the home network.
+> Designed for spare-time development — each phase leaves the application in a working state.
+
+---
+
+## Background & Goal
+
+Currently the application runs by manually launching it from a terminal on a gaming PC. The goal
+is to deploy it as a Docker stack on a Lenovo ThinkCentre M900 (32GB RAM) running Docker Desktop,
+so that it is always on, always accessible via a browser on the home network, and backed up
+via NAS volumes. Ollama will run as a sidecar container in the same stack, with the gaming PC's
+Ollama instance available as a fallback if needed.
+
+---
+
+## Phase D1 — Verify Ollama on the Mini PC
+**Goal:** Confirm the mini PC can run Ollama at an acceptable speed before committing to the architecture.
+**Estimated effort:** 1 session
+
+### Background
+The mini PC has an integrated GPU only — Ollama will run entirely on CPU. This phase answers
+the question "is it fast enough?" before any Docker work begins. There is no point containerising
+an LLM that is too slow to be useful.
+
+### Tasks
+- [X] Install Ollama directly on the mini PC (not in Docker yet — just the native installer)
+- [X] Pull the model: `ollama pull gemma4:e4b`
+- [X] Run a timed test prompt and record how long it takes:
+  ```bash
+  ollama run gemma4:e4b "Summarise this in one sentence: Had a productive day working on the NAS setup."
+  ```
+- [X] Test a longer prompt — paste a full transcript and ask for markdown formatting
+- [X] Record the response times in the Field Notes below
+- [X] Decide: is the speed acceptable for a journaling tool where waiting 30-60 seconds is fine?
+
+### Exit Criteria
+You have a real response time for a realistic prompt on the mini PC hardware and a clear decision
+on whether to run Ollama there or keep it on the gaming PC as primary.
+
+---
+
+## Phase D2 — Ollama Fallback in llm_client.py
+**Goal:** Update the LLM client to try the gaming PC's Ollama first and fall back to a second
+instance if unreachable. This keeps the app working whether or not the gaming PC is on.
+**Estimated effort:** 1 session
+
+### Background
+The app currently has a hardcoded Ollama endpoint. This phase introduces a simple health check
+so the app can decide at runtime which Ollama instance to use. This is done in Python before
+any Docker work — it can be tested on your existing setup by temporarily pointing primary at
+a bad address to force the fallback.
+
+### Tasks
+- [X] Add two Ollama endpoint values to `services/config.py`:
+  ```python
+  OLLAMA_PRIMARY = "http://192.168.x.x:11434"   # gaming PC — update with real IP
+  OLLAMA_FALLBACK = "http://ollama:11434"         # docker sidecar service name
+  ```
+- [X] Write a `get_ollama_endpoint()` function in `services/llm_client.py`:
+  ```python
+  def get_ollama_endpoint() -> str:
+      try:
+          httpx.get(f"{OLLAMA_PRIMARY}/api/tags", timeout=2)
+          return OLLAMA_PRIMARY
+      except Exception:
+          return OLLAMA_FALLBACK
+  ```
+- [X] Update all Ollama calls in `llm_client.py` to use `get_ollama_endpoint()` rather than a hardcoded URL
+- [X] Test the fallback by temporarily changing `OLLAMA_PRIMARY` to a bad address and confirming the app still works
+- [X] Restore the correct primary address and commit
+
+### Exit Criteria
+The app selects the correct Ollama endpoint automatically. Pointing primary at a bad address causes
+a clean fallback with no crash. The gaming PC address is not hardcoded anywhere in the codebase.
+
+---
+
+## Phase D3 — Prepare the App for Docker
+**Goal:** Make the application ready to run inside a container by resolving assumptions that only
+work on a local developer machine.
+**Estimated effort:** 1–2 sessions
+
+### Background
+Docker containers are isolated environments. Things that work on your machine — relative file paths,
+hardcoded drive letters, environment-specific config — will break inside a container unless you
+address them first. This phase is about making the app portable before containerising it.
+
+### Tasks
+- [ ] Audit `services/config.py` for any Windows-specific paths (drive letters, backslashes)
+  — replace with `pathlib.Path` relative paths if not already done
+- [ ] Ensure `data/recordings/` and `data/logs/` are created by `ensure_directories()` at startup
+  — these will be mounted as Docker volumes
+- [ ] Move any remaining hardcoded configuration values into environment variables using `python-dotenv`:
+  ```python
+  # .env
+  OLLAMA_PRIMARY=http://192.168.x.x:11434
+  OLLAMA_FALLBACK=http://ollama:11434
+  ```
+- [ ] Add `python-dotenv` loading to `services/config.py` if not already present
+- [ ] Generate a clean `requirements.txt` from your virtual environment:
+  ```bash
+  pip freeze > requirements.txt
+  ```
+- [ ] Review `requirements.txt` and remove anything that is clearly a dev-only tool
+  (e.g. `ipykernel`, `nbstripout`) — these do not belong in a production container
+- [ ] Confirm the app runs cleanly from a fresh terminal with no VS Code involvement
+
+### Exit Criteria
+The app starts and runs using only environment variables for configuration. No hardcoded paths
+or Windows-specific assumptions remain. `requirements.txt` is clean and accurate.
+
+---
+
+## Phase D4 — Write the Dockerfile
+**Goal:** Write a Dockerfile that builds a container image for the Captain's Log Streamlit app.
+**Estimated effort:** 1 session
+
+### Background
+A Dockerfile is a set of instructions for building a container image — think of it like a recipe
+that starts from a base OS, installs your dependencies, copies your code, and defines how to
+start the app. You write it once and Docker uses it to produce a repeatable, portable image.
+
+### Tasks
+- [ ] Create `Dockerfile` in the project root:
+  ```dockerfile
+  FROM python:3.12-slim
+
+  WORKDIR /app
+
+  COPY requirements.txt .
+  RUN pip install --no-cache-dir -r requirements.txt
+
+  COPY . .
+
+  EXPOSE 8501
+
+  CMD ["streamlit", "run", "app.py", \
+       "--server.address", "0.0.0.0", \
+       "--server.sslCertFile", "cert.pem", \
+       "--server.sslKeyFile", "key.pem"]
+  ```
+- [ ] Add a `.dockerignore` file to prevent unnecessary files being copied into the image:
+  ```
+  .git
+  .env
+  __pycache__
+  *.pyc
+  data/
+  db/
+  notebooks/
+  *.pem
+  ```
+- [ ] Build the image locally on your gaming PC to confirm it builds without errors:
+  ```bash
+  docker build -t captains-log .
+  ```
+- [ ] Fix any build errors before moving on — do not proceed to Compose until the image builds cleanly
+
+### Tips
+- `python:3.12-slim` is a minimal Python image — smaller and faster to build than the full version
+- The `--no-cache-dir` flag on pip keeps the image size down
+- Data and database files are excluded from the image because they will be mounted as volumes
+
+### Exit Criteria
+`docker build` completes without errors. The image exists locally. No sensitive files or data
+directories are baked into the image.
+
+---
+
+## Phase D5 — Docker Compose Stack
+**Goal:** Write a Docker Compose file that runs the app and Ollama together as a single stack,
+with volumes for persistent data.
+**Estimated effort:** 1–2 sessions
+
+### Background
+Docker Compose lets you define multiple containers that work together as a single application.
+In your case the stack has two services: the Captain's Log app and an Ollama instance.
+Containers in the same Compose stack communicate by service name — so the app reaches Ollama
+at `http://ollama:11434` without any IP addresses or port configuration between them.
+
+Volumes are how data persists beyond the container's lifetime. Without them, everything inside
+a container is lost when it stops. By mounting your `data/` and `db/` folders as volumes pointing
+to your NAS or a local folder on the mini PC, your logs and database survive restarts.
+
+### Tasks
+- [ ] Create `docker-compose.yml` in the project root:
+  ```yaml
+  services:
+    app:
+      build: .
+      ports:
+        - "8501:8501"
+      depends_on:
+        - ollama
+      env_file:
+        - .env
+      volumes:
+        - ./data:/app/data
+        - ./db:/app/db
+        - ./cert.pem:/app/cert.pem:ro
+        - ./key.pem:/app/key.pem:ro
+      restart: unless-stopped
+
+    ollama:
+      image: ollama/ollama
+      volumes:
+        - ollama_models:/root/.ollama
+      restart: unless-stopped
+
+  volumes:
+    ollama_models:
+  ```
+- [ ] Create a `.env` file on the mini PC (not committed to Git) with the correct values
+- [ ] Copy the SSL certificate files (`cert.pem`, `key.pem`) to the mini PC
+- [ ] Start the stack: `docker compose up -d`
+- [ ] Pull the model into the Ollama container:
+  ```bash
+  docker exec -it captains-log-ollama-1 ollama pull gemma4:e4b
+  ```
+- [ ] Open a browser and confirm the app is accessible at `https://[mini-pc-ip]:8501`
+- [ ] Make a test log entry end to end and confirm it saves correctly
+
+### Tips
+- `restart: unless-stopped` means Docker restarts the containers automatically after a reboot
+- The `ollama_models` named volume persists the downloaded model — it will not need re-downloading
+  every time the stack restarts
+- `docker compose logs -f app` streams the app logs live if you need to debug
+
+### Exit Criteria
+The full stack starts with one command. A test log entry completes end to end. Data persists
+after a `docker compose down` and `docker compose up` cycle.
+
+---
+
+## Phase D6 — NAS Volume Integration
+**Goal:** Point the data and database volumes at a location on the NAS so that all log data
+is backed up automatically.
+**Estimated effort:** 1 session
+
+### Background
+Currently the volumes point to local folders on the mini PC's SSD. This phase moves them to
+a NAS mount so the data is backed up alongside everything else on the NAS. The mini PC SSD
+is a 240GB drive shared with Docker and the OS — not the right long-term home for log data.
+
+### Tasks
+- [ ] Confirm the NAS share is mounted on the mini PC and accessible as a path
+- [ ] Create the target directories on the NAS:
+  ```
+  /mnt/nas/captains-log/data/
+  /mnt/nas/captains-log/db/
+  ```
+- [ ] Update `docker-compose.yml` to point volumes at the NAS mount:
+  ```yaml
+  volumes:
+    - /mnt/nas/captains-log/data:/app/data
+    - /mnt/nas/captains-log/db:/app/db
+  ```
+- [ ] Restart the stack and confirm the app still works
+- [ ] Verify that a new log entry creates files on the NAS, not the local SSD
+- [ ] Confirm NAS backups include these directories
+
+### Exit Criteria
+Log files and the database are written to the NAS. The mini PC SSD contains no application data.
+A test log entry is visible in the NAS directory.
+
+---
+
+## Phase D7 — Portainer Integration & Ongoing Management
+**Goal:** Manage the Captain's Log stack through Portainer rather than the command line.
+**Estimated effort:** 1 session
+
+### Tasks
+- [ ] Add the Captain's Log stack to Portainer via the Compose file
+- [ ] Confirm you can start, stop, and restart the stack from the Portainer UI
+- [ ] Set up a simple update process for when the app code changes:
+  ```bash
+  docker compose build --no-cache
+  docker compose up -d
+  ```
+- [ ] Document the update process in `README.md` so you don't have to remember it
+- [ ] Confirm Portainer shows container health and logs for both services
+
+### Exit Criteria
+The stack is visible and manageable in Portainer. You can restart it without touching the command line.
+The update process is documented.
+
+---
+
+## Dependencies Reference
+
+| Tool | Purpose |
+|------|---------|
+| Docker Desktop | Container runtime on mini PC |
+| Portainer | Docker management UI |
+| `python-dotenv` | Environment variable loading |
+| `ollama/ollama` | Official Ollama Docker image |
+
+---
+
+## Field Notes
+*Use this section as a running log of discoveries, decisions, and gotchas encountered during the Dockerisation work.*
+
+- [Date] — Ollama CPU-only response time on mini PC: [record actual times here]
+- [Date] — Decision on primary/fallback Ollama: [record outcome here]
+- [Date] — NAS mount path on mini PC: [record actual path here]
+
+
+
+---
+
 ## Future Phases (TBD) — REST API & Custom Web Frontend
 
 These phases are deferred in favour of the Streamlit-first approach. The content is preserved here for reference if the project later needs a dedicated API layer, a mobile client, or a custom web interface.
