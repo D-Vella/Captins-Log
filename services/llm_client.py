@@ -5,6 +5,27 @@ import datetime
 from services.config import OLLAMA_PRIMARY, OLLAMA_PRIMARY_MODEL, OLLAMA_FALLBACK, OLLAMA_FALLBACK_MODEL
 
 
+def check_connection(endpoint_type: str) -> str:
+    """
+    Checks the connectivity to the specified endpoint type.
+    :param endpoint_type: "primary" or "secondary"
+    :return: "OK" if reachable, an error message otherwise
+    """
+    if endpoint_type == "primary":
+        endpoint = OLLAMA_PRIMARY
+    elif endpoint_type == "secondary":
+        endpoint = OLLAMA_FALLBACK
+    else:
+        raise ValueError("Invalid endpoint type. Must be 'primary' or 'secondary'.")
+
+    try:
+        response = httpx.get(f"{endpoint}/api/version", timeout=2)
+        response.raise_for_status()  # Raise an error for bad responses
+        return "OK"
+    except Exception as e:
+        return f"Error: {e}"
+
+
 def get_ollama_endpoint() -> tuple:
       """
         Returns the primary endpoint if reachable, otherwise returns the fallback endpoint.

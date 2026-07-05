@@ -1,12 +1,42 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timezone, date
-from services.config import DATABASE_PATH
+from services.config import DATABASE_PATH, POSTGRES_CONFIG
+import psycopg2
 
 DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
+
+def check_connection(db_type: str) -> str:
+    """
+    Checks the connection to the specified database type.
+    Args:
+        db_type (str): The type of database to check. Valid values are "sqlite" and "postgres".
+    Returns:
+        str: "OK" if the connection is successful, an error message otherwise.
+    """
+    try:
+        if db_type == "sqlite":
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
+        elif db_type == "postgres":
+            connection = psycopg2.connect(
+                dbname=POSTGRES_CONFIG["dbname"],
+                user=POSTGRES_CONFIG["user"],
+                password=POSTGRES_CONFIG["password"],
+                host=POSTGRES_CONFIG["host"],
+                port=POSTGRES_CONFIG["port"]
+            )
+            cursor = connection.cursor()
+            cursor.execute("SELECT 1")
+            connection.close()
+        else:
+            return "Invalid database type. Use 'sqlite' or 'postgres'."
+        return "OK"
+    except Exception as e:
+        return(f"Connection check failed for {db_type}: {e}")
 
 def reset_db():
     """

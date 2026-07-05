@@ -145,3 +145,13 @@ def rebuild_database(on_progress=None):
 
     if on_progress:
         on_progress(total, total, "Done")
+
+def check_connections() -> dict:
+    # This will check the connections to the database and LLM API and return a dict with the results.
+
+    return {
+        "SQL_Lite_database": database.check_connection("sqlite"),
+        "Postgress_database": database.check_connection("postgres"),
+        "Ollama_Primary": llm_client.check_connection("primary"),
+        "Ollama_Secondary": llm_client.check_connection("secondary")
+    }

@@ -14,5 +14,14 @@ services:
     volumes:
       - ollama_models:/root/.ollama
 
+  # Database service - Under Development and not currently being used.
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
 volumes:
   ollama_models:
+  pgdata:

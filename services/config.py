@@ -18,3 +18,11 @@ OLLAMA_FALLBACK_MODEL = dotenv.get_key(".env", "OLLAMA_FALLBACK_MODEL")
 def ensure_directories():
     RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+POSTGRES_CONFIG = {
+    "dbname": dotenv.get_key(".env", "POSTGRES_DB"),
+    "user": dotenv.get_key(".env", "POSTGRES_USER"),
+    "password": dotenv.get_key(".env", "POSTGRES_PASSWORD"),
+    "host": dotenv.get_key(".env", "POSTGRES_HOST"),
+    "port": dotenv.get_key(".env", "POSTGRES_PORT")
+}

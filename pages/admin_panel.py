@@ -175,6 +175,17 @@ def render_data_rebuild():
                 st.session_state.admin_confirm_rebuild = False
                 st.rerun()
 
+def render_connectivty_check():
+    st.subheader("Connectivity Check")
+
+    st.info(
+        "This will check the connectivity to multiple endpoints. "
+        "It will report which endpoint is reachable and the response time."
+    )
+
+    if st.button("Check Connectivity", type="primary"):
+        pass
+
 # endregion
 
 # region ── Page ─────────────────────────────────────────────
