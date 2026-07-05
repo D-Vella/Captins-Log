@@ -60,11 +60,11 @@ A code-only change rebuilds using cached dependency layers (fast) and pushes in 
 > **Why CI here:** A GitHub Actions "runner" is just a throwaway machine GitHub spins up to run your build. It removes the "did I remember to build and push?" step and guarantees the image always matches what's on `main`. For GHCR specifically, the runner already has a built-in `GITHUB_TOKEN`, so you don't manage any registry credentials yourself.
 
 ### Tasks
-- [ ] Add `.github/workflows/build.yml`, triggered on push to `main`.
-- [ ] Use `docker/build-push-action` to build and push to `ghcr.io`.
-- [ ] Authenticate with the built-in `GITHUB_TOKEN` (no secret to create).
-- [ ] Tag each image with both `:latest` and the git short SHA (e.g. `:a1b2c3d`) so you can trace exactly which commit a running image came from.
-- [ ] Push a trivial change to `main` and confirm a new image appears in GHCR without you building anything locally.
+- [X] Add `.github/workflows/build.yml`, triggered on push to `main`.
+- [X] Use `docker/build-push-action` to build and push to `ghcr.io`.
+- [X] Authenticate with the built-in `GITHUB_TOKEN` (no secret to create).
+- [X] Tag each image with both `:latest` and the git short SHA (e.g. `:a1b2c3d`) so you can trace exactly which commit a running image came from.
+- [X] Push a trivial change to `main` and confirm a new image appears in GHCR without you building anything locally.
 
 ### Exit Criteria
 Pushing to `main` publishes a new image to GHCR automatically. Your dev PC is no longer in the build loop.
