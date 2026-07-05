@@ -29,4 +29,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/d-vella/captains-log:latest
+          tags: |
+            ghcr.io/d-vella/captains-log:latest
+            ghcr.io/d-vella/captains-log:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
