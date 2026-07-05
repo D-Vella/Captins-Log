@@ -1,5 +1,11 @@
 import streamlit as st
 
+from alembic.config import Config
+from alembic import command
+
+def init_database():
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
 
 # Set page config must be the first Streamlit call
 st.set_page_config(page_title="Captain's Log", layout="wide")

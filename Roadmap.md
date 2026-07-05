@@ -458,7 +458,7 @@ a container is lost when it stops. By mounting your `data/` and `db/` folders as
 to your NAS or a local folder on the mini PC, your logs and database survive restarts.
 
 ### Tasks
-- [ ] Create `docker-compose.yml` in the project root:
+- [X] Create `docker-compose.yml` in the project root:
   ```yaml
   services:
     app:
@@ -518,7 +518,7 @@ a NAS mount so the data is backed up alongside everything else on the NAS. The m
 is a 240GB drive shared with Docker and the OS — not the right long-term home for log data.
 
 ### Tasks
-- [ ] Confirm the NAS share is mounted on the mini PC and accessible as a path
+- [X] Confirm the NAS share is mounted on the mini PC and accessible as a path
 - [ ] Create the target directories on the NAS:
   ```
   /mnt/nas/captains-log/data/

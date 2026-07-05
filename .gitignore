@@ -216,3 +216,6 @@ data/audio/
 
 #certificates:
 *.pem
+
+#Docker build files:
+*.tar

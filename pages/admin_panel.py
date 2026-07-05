@@ -193,6 +193,8 @@ def render_connectivty_check():
 st.title("Admin")
 st.caption("Database management and diagnostics.")
 
+render_connectivty_check()
+
 if st.button("Refresh data"):
     st.cache_data.clear()
     st.rerun()
@@ -202,7 +204,6 @@ segments = load_segments()
 enrichments = load_enrichments()
 
 render_overview(headers, segments, enrichments)
-render_connectivty_check()
 render_table_viewer(headers, segments, enrichments)
 render_entry_management(headers)
 render_data_rebuild()
