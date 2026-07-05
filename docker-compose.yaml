@@ -12,16 +12,19 @@ services:
   ollama:
     image: ollama/ollama
     volumes:
-      - ollama_models:/root/.ollama
+      - "C:\Users\dsvel\.ollama\models:/root/.ollama"
 
   # Database service - Under Development and not currently being used.
   db:
     image: postgres:16
+    ports:
+      - "5432:5432"
     environment:
+      - POSTGRES_USER=captains_log_user
       - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=captains_log_db
     volumes:
       - pgdata:/var/lib/postgresql/data
 
 volumes:
-  ollama_models:
   pgdata:

@@ -14,7 +14,7 @@ from services.database import (
     api_delete_log_entry
 )
 from typing import cast
-from services.controller import rebuild_database
+from services.controller import check_connections, rebuild_database
 
 st.info("Currently implementing.")
 
@@ -184,7 +184,8 @@ def render_connectivty_check():
     )
 
     if st.button("Check Connectivity", type="primary"):
-        pass
+        conn_check_results = check_connections()
+        st.json(conn_check_results)
 
 # endregion
 
@@ -201,6 +202,7 @@ segments = load_segments()
 enrichments = load_enrichments()
 
 render_overview(headers, segments, enrichments)
+render_connectivty_check()
 render_table_viewer(headers, segments, enrichments)
 render_entry_management(headers)
 render_data_rebuild()
