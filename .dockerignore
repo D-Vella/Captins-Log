@@ -1,11 +1,11 @@
 .git
-  .env
-  __pycache__
-  *.pyc
-  data/
-  db/
-  notebooks/
-  *.pem
-  test_data/
-  *.md
+.env
+__pycache__
+*.pyc
+data/
+db/
+notebooks/
+*.pem
+test_data/
+*.md
   

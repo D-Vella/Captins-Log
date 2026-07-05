@@ -20,15 +20,15 @@ Registry choice throughout: **GHCR (`ghcr.io`)**, GitHub's own container registr
 > **Why this is the big win:** `docker push`/`docker pull` transfer only the layers that changed, not the whole image. After the first push, a code-only change moves a few MB in seconds instead of copying the entire tarball every time. This single change is what makes iteration fast.
 
 ### Tasks
-- [ ] Create a GitHub Personal Access Token (classic) with `write:packages` and `read:packages` scopes — this is the password Docker uses to authenticate to GHCR. Treat it like any other secret (it goes in a password manager, never in a repo).
-- [ ] On the **dev PC**: `docker login ghcr.io` — username is your GitHub username, password is the token.
-- [ ] Add a `.dockerignore` file **before building** (see Phase 2 for the full list — at minimum: `.env`, `.git/`, `data/`, `__pycache__/`, `.venv/`). This stops secrets and junk being copied into the image.
-- [ ] Tag the image with the full registry path:
+- [X] Create a GitHub Personal Access Token (classic) with `write:packages` and `read:packages` scopes — this is the password Docker uses to authenticate to GHCR. Treat it like any other secret (it goes in a password manager, never in a repo).
+- [X] On the **dev PC**: `docker login ghcr.io` — username is your GitHub username, password is the token.
+- [X] Add a `.dockerignore` file **before building** (see Phase 2 for the full list — at minimum: `.env`, `.git/`, `data/`, `__pycache__/`, `.venv/`). This stops secrets and junk being copied into the image.
+- [X] Tag the image with the full registry path:
   `docker build -t ghcr.io/d-vella/captains-log:latest .`
-- [ ] Push it: `docker push ghcr.io/d-vella/captains-log:latest`
-- [ ] On the **mini PC**: `docker login ghcr.io` (one-time), then edit `docker-compose.yml` so the service uses `image: ghcr.io/d-vella/captains-log:latest`. Delete the local-image workaround you currently use.
-- [ ] Deploy: `docker compose pull && docker compose up -d`
-- [ ] Confirm the container reads its secrets from a `.env` **on the mini PC** via `env_file:` in compose — and that there is no `.env` baked inside the image.
+- [X] Push it: `docker push ghcr.io/d-vella/captains-log:latest`
+- [X] On the **mini PC**: `docker login ghcr.io` (one-time), then edit `docker-compose.yml` so the service uses `image: ghcr.io/d-vella/captains-log:latest`. Delete the local-image workaround you currently use.
+- [X] Deploy: `docker compose pull && docker compose up -d`
+- [X] Confirm the container reads its secrets from a `.env` **on the mini PC** via `env_file:` in compose — and that there is no `.env` baked inside the image.
 
 ### Exit Criteria
 A code change reaches the mini PC through `push` → `pull` with no tarball and no compose editing. A second push after a small code change visibly transfers only a small layer, not the whole image.
@@ -42,11 +42,11 @@ A code change reaches the mini PC through `push` → `pull` with no tarball and 
 > **Why order matters:** Docker caches layers and only rebuilds from the first changed instruction downward. If you `COPY` your app code *before* installing dependencies, then every code change invalidates the dependency layer and reinstalls everything. Copy `requirements.txt` and install deps **first**, then copy code — so a code change only rebuilds the tiny final layer.
 
 ### Tasks
-- [ ] Reorder the Dockerfile: `COPY requirements.txt` → `RUN pip install ...` → *then* `COPY . .` for the app code.
-- [ ] Fill out `.dockerignore` properly: `.env`, `.git/`, `data/`, `__pycache__/`, `.venv/`, `notebooks/`, `*.tar`, any local cache dirs.
-- [ ] Pin the base image to an explicit tag (e.g. `python:3.12-slim`) rather than `latest`, so builds are reproducible and small.
-- [ ] Consider a multi-stage build only if build-time tooling doesn't need to ship in the final image (be honest — for a Streamlit app this may be unnecessary; don't add it just because it's a "best practice").
-- [ ] After a code-only change, run `docker push` and watch the output: most layers should report *already exists*, and only the small code layer should upload.
+- [X] Reorder the Dockerfile: `COPY requirements.txt` → `RUN pip install ...` → *then* `COPY . .` for the app code.
+- [X] Fill out `.dockerignore` properly: `.env`, `.git/`, `data/`, `__pycache__/`, `.venv/`, `notebooks/`, `*.tar`, any local cache dirs.
+- [X] Pin the base image to an explicit tag (e.g. `python:3.12-slim`) rather than `latest`, so builds are reproducible and small.
+- [X] Consider a multi-stage build only if build-time tooling doesn't need to ship in the final image (be honest — for a Streamlit app this may be unnecessary; don't add it just because it's a "best practice").
+- [X] After a code-only change, run `docker push` and watch the output: most layers should report *already exists*, and only the small code layer should upload.
 
 ### Exit Criteria
 A code-only change rebuilds using cached dependency layers (fast) and pushes in seconds. The final image contains only what the app needs to run — no build junk, no secrets, no `data/`.

@@ -1,7 +1,7 @@
 import streamlit as st
 
-from alembic.config import Config
 from alembic import command
+from alembic.config import Config
 
 def init_database():
     alembic_cfg = Config("alembic.ini")
