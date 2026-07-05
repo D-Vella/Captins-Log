@@ -8,6 +8,9 @@ services:
     volumes:
       - ./data:/app/data
       - ./db:/app/db
+      - ./cert.pem:/app/cert.pem:ro
+      - ./key.pem:/app/key.pem:ro
+      - ./.env:/app/.env:ro
 
   ollama:
     image: ollama/ollama
