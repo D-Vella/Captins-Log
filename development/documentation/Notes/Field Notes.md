@@ -20,3 +20,5 @@ Hit compose errors and used the recommended AI assistant in Docker Desktop and g
 
 Docker building is now being handled by the Git Hub Actions CICD process. Provided I keep my repo public it is seemingly free.
 Deployment to the mini pc is still manual.
+
+The `requirements.txt` needs to contain both `alembic==1.18.5` & `psycopg2-binary==2.9.12` which the `pipreqs` misses.
