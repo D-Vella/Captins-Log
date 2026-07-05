@@ -12,7 +12,7 @@ services:
   ollama:
     image: ollama/ollama
     volumes:
-      - "C:\Users\dsvel\.ollama\models:/root/.ollama"
+      - ~/.ollama/models:/root/.ollama
 
   # Database service - Under Development and not currently being used.
   db:

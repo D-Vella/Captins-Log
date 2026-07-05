@@ -13,3 +13,7 @@ Ran into an issue with the requirements.txt file. It turns out I have been using
 Claude instroduced me to the function `pipreqs` which actively scans my .py files.
 
 NOTE: When using `docker build -t captinslog .` that period at the end is IMPORTANT!
+
+Hit compose errors and used the recommended AI assistant in Docker Desktop and got this nugget of info!
+
+> The Windows path C:\Users\dsvel\.ollama\models is replaced with ~/.ollama/models, which expands to your home directory and works cross-platform. If you're running on Windows with WSL2, Docker Desktop will handle the path translation automatically. If you need a different mount location, adjust the left side of the volume as needed.
