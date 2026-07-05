@@ -6,6 +6,5 @@ data/
 db/
 notebooks/
 *.pem
-test_data/
 *.md
-  
+development/
