@@ -142,7 +142,7 @@ loudly, one silently) the moment the backend is Postgres.
       side in `UPPER(...)` too (`WHERE UPPER(ls.raw_transcript) LIKE :keyword`) so the comparison
       is explicitly case-insensitive on both sides — this works identically on SQLite and
       Postgres, unlike switching to `ILIKE` (SQLite doesn't support `ILIKE` at all)
-- [ ] Re-run the full app end-to-end against SQLite and confirm search and recording still work
+- [X] Re-run the full app end-to-end against SQLite and confirm search and recording still work
       correctly — this phase should not change any observable behavior yet, only the SQL that
       produces it
 
@@ -164,16 +164,16 @@ connectivity via your own Compose setup, this phase is about pointing the *app* 
 `SELECT 1` probe — at it.
 
 ### Tasks
-- [ ] Fill in `.env` with real `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` /
+- [X] Fill in `.env` with real `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` /
       `POSTGRES_HOST` / `POSTGRES_PORT` values matching your Postgres container
-- [ ] Set `DATABASE_BACKEND=postgres` in `.env`
-- [ ] Run `check_connection("postgres")` (already exists in `services/database.py`) and confirm
+- [X] Set `DATABASE_BACKEND=postgres` in `.env`
+- [X] Run `check_connection("postgres")` (already exists in `services/database.py`) and confirm
       it returns `"OK"`
-- [ ] Run `alembic upgrade head` against the empty Postgres database using the baseline migration
+- [X] Run `alembic upgrade head` against the empty Postgres database using the baseline migration
       from Phase 1 — confirm all three tables appear with `psql \dt` or a GUI client
-- [ ] Run the app end to end against Postgres: record a segment, generate an enrichment, browse
+- [X] Run the app end to end against Postgres: record a segment, generate an enrichment, browse
       history, run a keyword search — fix anything that breaks
-- [ ] Deliberately test the FK relationship — try creating a `log_segment` with a bogus
+- [X] Deliberately test the FK relationship — try creating a `log_segment` with a bogus
       `log_entry_id` and confirm Postgres rejects it (SQLite wasn't enforcing this without
       `PRAGMA foreign_keys=ON`, so this is a genuine new behavior worth seeing once on purpose)
 
@@ -203,7 +203,7 @@ Postgres is actually ready) plus an **entrypoint script** on the `app` service (
 automatically every time the container starts, before the app process launches).
 
 ### Tasks
-- [ ] Add a healthcheck to the `db` service in `docker-compose.yaml` using Postgres's own
+- [X] Add a healthcheck to the `db` service in `docker-compose.yaml` using Postgres's own
       readiness tool:
   ```yaml
   db:
@@ -214,7 +214,7 @@ automatically every time the container starts, before the app process launches).
       timeout: 5s
       retries: 5
   ```
-- [ ] Change the `app` service's `depends_on` from a plain list to the long form so it actually
+- [X] Change the `app` service's `depends_on` from a plain list to the long form so it actually
       waits for Postgres to be healthy, not just started:
   ```yaml
   app:
@@ -222,18 +222,18 @@ automatically every time the container starts, before the app process launches).
       db:
         condition: service_healthy
   ```
-- [ ] Reconcile the `db` service's hard-coded credentials (currently
+- [X] Reconcile the `db` service's hard-coded credentials (currently
       `POSTGRES_USER=captains_log_user`, etc., directly in `docker-compose.yaml`) with the
       `.env`-driven `POSTGRES_CONFIG` the app reads — both should come from the same `.env` file
       so the app and the database it's talking to always agree on credentials
-- [ ] Write `entrypoint.sh` at the project root:
+- [X] Write `entrypoint.sh` at the project root:
   ```bash
   #!/bin/sh
   set -e
   alembic upgrade head
   exec "$@"
   ```
-- [ ] Update the `Dockerfile` to copy and use it:
+- [X] Update the `Dockerfile` to copy and use it:
   ```dockerfile
   COPY entrypoint.sh .
   RUN chmod +x entrypoint.sh

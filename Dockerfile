@@ -23,6 +23,10 @@ FROM python:3.12-slim
 
   EXPOSE 8501
 
+  COPY entrypoint.sh .
+  RUN chmod +x entrypoint.sh
+    
+  ENTRYPOINT ["./entrypoint.sh"]
   CMD ["streamlit", "run", "app.py", \
        "--server.address", "0.0.0.0", \
        "--server.sslCertFile", "cert.pem", \

@@ -1,10 +1,12 @@
 services:
   app:
-    build: .
+    image: ghcr.io/d-vella/captains-log:latest
     ports:
       - "8501:8501"
     depends_on:
       - ollama
+      - db:
+        condition: service_healthy
     volumes:
       - ./data:/app/data
       - ./db:/app/db
@@ -23,11 +25,16 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=captains_log_user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=captains_log_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
