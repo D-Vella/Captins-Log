@@ -1,4 +1,4 @@
-/bin/sh
-  set -e
-  alembic upgrade head
-  exec "$@"
+#!/bin/sh
+set -e
+alembic upgrade head
+exec "$@"
