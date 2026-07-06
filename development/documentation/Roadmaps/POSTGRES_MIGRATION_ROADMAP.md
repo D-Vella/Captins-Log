@@ -54,21 +54,21 @@ SQLite, so these are ordinary bug fixes instead of migration-day surprises.
 **Estimated effort:** 1–2 sessions
 
 ### Tasks
-- [ ] Decide the ground truth for the two drifted columns and fix the raw SQL in
+- [X] Decide the ground truth for the two drifted columns and fix the raw SQL in
       `services/database.py` to match `services/models.py`:
   - `create_log_segment()` — change the `INSERT` from `duration_secs` to `audio_duration`
   - `create_log_enrichment()` / `update_log_enrichment()` — change `generated_at` to
     `created_at` / `updated_at`
-- [ ] Delete your current SQLite file (or back it up) and rebuild it from a clean baseline so
+- [X] Delete your current SQLite file (or back it up) and rebuild it from a clean baseline so
       column names actually match — since it's dev data, this is simpler than writing a
       data-preserving `ALTER` script
-- [ ] Replace the single existing Alembic revision with one clean baseline migration that
+- [X] Replace the single existing Alembic revision with one clean baseline migration that
       `op.create_table()`s all three tables exactly as they're defined in `services/models.py`
       today (this replaces `bd0bbe78a193_initial_schema.py` — you're the only consumer of this
       history, so squashing it is safe)
-- [ ] Run `alembic upgrade head` against a fresh, empty SQLite file and confirm all three tables
+- [X] Run `alembic upgrade head` against a fresh, empty SQLite file and confirm all three tables
       appear with the correct columns
-- [ ] Run the app end-to-end (record → transcribe → enrich → browse history) against the rebuilt
+- [X] Run the app end-to-end (record → transcribe → enrich → browse history) against the rebuilt
       SQLite database and confirm nothing regressed
 
 ### Tips

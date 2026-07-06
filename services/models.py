@@ -12,6 +12,7 @@ from sqlalchemy.orm import (
     relationship
 )
 from datetime import datetime as dt
+from typing import Optional
 
 class Base(DeclarativeBase):
     pass
@@ -46,7 +47,7 @@ class log_enrichment(Base):
     log_entry_id: Mapped[int] = mapped_column(ForeignKey("log_entry.id"))
     formatted_md: Mapped[str] = mapped_column(Text)
     followup_qs: Mapped[str] = mapped_column(Text)
-    weekly_summary: Mapped[str] = mapped_column(Text)
+    weekly_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[dt] = mapped_column(DateTime)
     updated_at: Mapped[dt] = mapped_column(DateTime)
 

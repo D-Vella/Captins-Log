@@ -78,23 +78,23 @@ def create_or_get_log_header(entry_date: str) -> int:
             {"date": entry_date}
         ).fetchone()[0] # pyright: ignore[reportOptionalSubscript]
 
-def create_log_segment(log_entry_id: int, audio_filename: str, duration_secs: float, raw_transcript: str) -> int:
+def create_log_segment(log_entry_id: int, audio_filename: str, audio_duration: float, raw_transcript: str) -> int:
     """
     Creates a new log segment associated with a log entry.
     Args:
         log_entry_id (int): The ID of the log entry this segment belongs to.
         audio_filename (str): The filename of the audio file associated with this segment.
-        duration_secs (float): The duration of the audio segment in seconds.
+        audio_duration (float): The duration of the audio segment in seconds.
         raw_transcript (str): The raw transcript text of the audio segment.
     Returns:
         int: The ID of the newly created log segment row.
     """
     with Session() as session:
         session.execute(
-            text("""INSERT INTO log_segment (log_entry_id, audio_filename, duration_secs, raw_transcript, created_at)
-                    VALUES (:entry_id, :filename, :duration, :transcript, :now)"""),
+            text("""INSERT INTO log_segment (log_entry_id, audio_filename, audio_duration, raw_transcript, created_at, updated_at)
+                    VALUES (:entry_id, :filename, :audio_duration, :transcript, :now, :now)"""),
             {"entry_id": log_entry_id, "filename": audio_filename,
-             "duration": duration_secs, "transcript": raw_transcript,
+             "audio_duration": audio_duration, "transcript": raw_transcript,
              "now": datetime.now(timezone.utc)}
         )
         session.commit()
@@ -112,8 +112,8 @@ def create_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str
     """
     with Session() as session:
         session.execute(
-            text("""INSERT INTO log_enrichment (log_entry_id, formatted_md, followup_qs, generated_at)
-                    VALUES (:entry_id, :md, :qs, :now)"""),
+            text("""INSERT INTO log_enrichment (log_entry_id, formatted_md, followup_qs, created_at, updated_at)
+                    VALUES (:entry_id, :md, :qs, :now, :now)"""),
             {"entry_id": log_entry_id, "md": formatted_md,
              "qs": followup_qs, "now": datetime.now(timezone.utc)}
         )
@@ -132,7 +132,7 @@ def update_log_enrichment(log_entry_id: int, formatted_md: str, followup_qs: str
             text("""UPDATE log_enrichment 
                     SET formatted_md = :md, 
                         followup_qs = :qs, 
-                        generated_at = :now
+                        updated_at = :now
                     WHERE log_entry_id = :entry_id
                  """),
             {"entry_id": log_entry_id, "md": formatted_md,
