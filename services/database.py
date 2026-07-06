@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timezone, date
-from services.config import DATABASE_PATH, POSTGRES_CONFIG
+from services.config import POSTGRES_CONFIG, get_database_url
 import psycopg2
 
-DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+DATABASE_URL = get_database_url()
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -90,15 +90,16 @@ def create_log_segment(log_entry_id: int, audio_filename: str, audio_duration: f
         int: The ID of the newly created log segment row.
     """
     with Session() as session:
-        session.execute(
+        segment_id = session.execute(
             text("""INSERT INTO log_segment (log_entry_id, audio_filename, audio_duration, raw_transcript, created_at, updated_at)
-                    VALUES (:entry_id, :filename, :audio_duration, :transcript, :now, :now)"""),
+                    VALUES (:entry_id, :filename, :audio_duration, :transcript, :now, :now)
+                 RETURNING id"""),
             {"entry_id": log_entry_id, "filename": audio_filename,
              "audio_duration": audio_duration, "transcript": raw_transcript,
              "now": datetime.now(timezone.utc)}
-        )
+        ).fetchone()[0]
         session.commit()
-        segment_id = session.execute(text("SELECT last_insert_rowid()")).scalar()
+
         print(f"✅ Log segment created for entry ID: {log_entry_id}")
         return segment_id
 
@@ -339,7 +340,7 @@ def search_logs_by_keyword(keyword: str):
                  FROM log_entry le
                     JOIN log_segment ls ON le.id = ls.log_entry_id
                     JOIN log_enrichment lech ON le.id = lech.log_entry_id
-                 WHERE ls.raw_transcript LIKE :keyword or lech.formatted_md LIKE :keyword
+                 WHERE UPPER(ls.raw_transcript) LIKE :keyword OR UPPER(lech.formatted_md) LIKE :keyword
                  """),
             {"keyword": f"%{keyword.upper()}%"}
         ).fetchall()

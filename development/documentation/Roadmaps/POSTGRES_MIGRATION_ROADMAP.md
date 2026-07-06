@@ -97,18 +97,18 @@ function that builds the right SQLAlchemy URL from `services/config.py`, default
 nothing changes yet — Postgres isn't actually used until Phase 4.
 
 ### Tasks
-- [ ] Add a `DATABASE_BACKEND` value to `services/config.py` (env-driven via `.env`, default
+- [X] Add a `DATABASE_BACKEND` value to `services/config.py` (env-driven via `.env`, default
       `"sqlite"`) alongside the existing `POSTGRES_CONFIG` dict
-- [ ] Add a `get_database_url()` function in `services/config.py` that returns
+- [X] Add a `get_database_url()` function in `services/config.py` that returns
       `sqlite:///{DATABASE_PATH}` when the backend is `sqlite`, or builds
       `postgresql+psycopg2://user:password@host:port/dbname` from `POSTGRES_CONFIG` when it's
       `postgres`
-- [ ] Update `services/database.py` to call `get_database_url()` instead of building the string
+- [X] Update `services/database.py` to call `get_database_url()` instead of building the string
       inline
-- [ ] Update `alembic/env.py` to call `get_database_url()` and inject it via
+- [X] Update `alembic/env.py` to call `get_database_url()` and inject it via
       `config.set_main_option("sqlalchemy.url", ...)` before `run_migrations_online()` builds the
       engine — this removes the second, independent connection string in `alembic.ini`
-- [ ] Confirm `alembic upgrade head` and the app both still work with `DATABASE_BACKEND=sqlite`
+- [X] Confirm `alembic upgrade head` and the app both still work with `DATABASE_BACKEND=sqlite`
       (the default) — this phase should be invisible from the outside
 
 ### Tips
@@ -135,10 +135,9 @@ Two things in `services/database.py` rely on SQLite-specific behavior and will m
 loudly, one silently) the moment the backend is Postgres.
 
 ### Tasks
-- [ ] Replace `SELECT last_insert_rowid()` (`create_log_segment()`) with an `INSERT ... RETURNING
-      id` and read the new ID off the `INSERT` result directly — `last_insert_rowid()` doesn't
+- [X] Replace `SELECT last_insert_rowid()` (`create_log_segment()`) with an `INSERT ... RETURNING id` and read the new ID off the `INSERT` result directly — `last_insert_rowid()` doesn't
       exist on Postgres, so this would fail hard the first time a segment is created
-- [ ] Fix the case-sensitivity assumption in `search_logs_by_keyword()` — it upper-cases the
+- [X] Fix the case-sensitivity assumption in `search_logs_by_keyword()` — it upper-cases the
       keyword in Python and relies on SQLite's default case-insensitive `LIKE`. Wrap the column
       side in `UPPER(...)` too (`WHERE UPPER(ls.raw_transcript) LIKE :keyword`) so the comparison
       is explicitly case-insensitive on both sides — this works identically on SQLite and
