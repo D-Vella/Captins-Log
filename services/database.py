@@ -195,7 +195,7 @@ def api_get_logs(log_id:str):
     session.close()
 
     if not results:
-        return None
+        return {}
 
     def row_to_dict(row):
         return {'id': row[0], 'entry_date': row[1], 'created_at': str(row[2])}

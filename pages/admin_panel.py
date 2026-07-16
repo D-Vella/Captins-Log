@@ -199,9 +199,9 @@ if st.button("Refresh data"):
     st.cache_data.clear()
     st.rerun()
 
-headers = load_headers()
-segments = load_segments()
-enrichments = load_enrichments()
+headers = load_headers() or {}
+segments = load_segments() or {}
+enrichments = load_enrichments() or {}
 
 render_overview(headers, segments, enrichments)
 render_table_viewer(headers, segments, enrichments)

@@ -244,7 +244,7 @@ automatically every time the container starts, before the app process launches).
        "--server.sslCertFile", "cert.pem", \
        "--server.sslKeyFile", "key.pem"]
   ```
-- [ ] Test the actual scenario this phase exists for — wipe the Postgres volume entirely and
+- [X] Test the actual scenario this phase exists for — wipe the Postgres volume entirely and
       bring the stack up from nothing:
   ```bash
   docker compose down -v
@@ -253,7 +253,7 @@ automatically every time the container starts, before the app process launches).
   ```
   Confirm the log shows Alembic creating tables before Streamlit starts, with no manual steps,
   and the app is usable immediately after
-- [ ] Test the second most common real scenario — restart the stack **without** wiping the
+- [X] Test the second most common real scenario — restart the stack **without** wiping the
       volume (`docker compose restart app`) and confirm `alembic upgrade head` running again
       against an already-current schema is a safe no-op
 
