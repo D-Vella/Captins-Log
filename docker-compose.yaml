@@ -4,7 +4,6 @@ services:
     ports:
       - "8501:8501"
     depends_on:
-      - ollama
       - db:
         condition: service_healthy
     volumes:
@@ -13,11 +12,6 @@ services:
       - ./cert.pem:/app/cert.pem:ro
       - ./key.pem:/app/key.pem:ro
       - ./.env:/app/.env:ro
-
-  ollama:
-    image: ollama/ollama
-    volumes:
-      - ~/.ollama/models:/root/.ollama
 
   # Database service - Under Development and not currently being used.
   db:
