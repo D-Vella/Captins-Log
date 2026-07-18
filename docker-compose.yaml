@@ -6,6 +6,18 @@ services:
     depends_on:
       - db:
         condition: service_healthy
+    environment:
+      - OLLAMA_PRIMARY=${OLLAMA_PRIMARY}
+      - OLLAMA_PRIMARY_MODEL=${OLLAMA_PRIMARY_MODEL}
+      - OLLAMA_FALLBACK=${OLLAMA_FALLBACK}
+      - OLLAMA_FALLBACK_MODEL=${OLLAMA_FALLBACK_MODEL}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - DATABASE_BACKEND=${DATABASE_BACKEND}
+      - WHISPER_SERVER_URL=${WHISPER_SERVER_URL}
     volumes:
       - ./data:/app/data
       - ./db:/app/db
