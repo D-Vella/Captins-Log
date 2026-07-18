@@ -153,5 +153,6 @@ def check_connections() -> dict:
         "SQL_Lite_database": database.check_connection("sqlite"),
         "Postgress_database": database.check_connection("postgres"),
         "Ollama_Primary": llm_client.check_connection("primary"),
-        "Ollama_Secondary": llm_client.check_connection("secondary")
+        "Ollama_Secondary": llm_client.check_connection("secondary"),
+        "Whisper_Server": transcriber.check_connection()
     }

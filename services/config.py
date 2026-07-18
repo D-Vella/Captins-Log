@@ -34,6 +34,8 @@ OLLAMA_PRIMARY_MODEL = dotenv.get_key(".env", "OLLAMA_PRIMARY_MODEL")
 OLLAMA_FALLBACK = dotenv.get_key(".env", "OLLAMA_FALLBACK")
 OLLAMA_FALLBACK_MODEL = dotenv.get_key(".env", "OLLAMA_FALLBACK_MODEL")
 
+WHISPER_SERVER_URL = dotenv.get_key(".env", "WHISPER_SERVER_URL")
+
 def ensure_directories():
     RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
