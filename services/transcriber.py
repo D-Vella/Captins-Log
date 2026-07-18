@@ -55,7 +55,7 @@ def check_connection() -> str:
         str: A string indicating the status of the connection.
     """
     try:
-        response = httpx.get(f"{WHISPER_SERVER_URL}/health", timeout=5)
+        response = httpx.get(f"{WHISPER_SERVER_URL}/", timeout=5)
         response.raise_for_status()
         return "Whisper server is reachable."
     except Exception as e:
