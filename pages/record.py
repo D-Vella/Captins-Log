@@ -4,12 +4,14 @@ This page serves as the dedicated interface for creating new log entries.
 Users upload an audio file, which is then processed by the controller to transcribe 
 and save the log entry, making it available on the Today's Log page.
 """
+import os
+import tempfile
+from datetime import date
+
 import streamlit as st
+
 import services.controller as ctrl
 from services.config import LOGS_DIR
-from datetime import date
-from typing import cast
-from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 st.title("Record a new log entry")
 
@@ -38,26 +40,26 @@ with col_controls:
             st.audio(uploaded_file)
 
     if st.button("Process recording"):
-        import tempfile, os
-        from datetime import date
-            
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            # Cast to UploadedFile to satisfy type checker
-            if live_recording:
-                file = cast(UploadedFile, live_recording)
-            else:
-                file = cast(UploadedFile, uploaded_file)
-            tmp.write(file.read())
-            tmp_path = tmp.name
-        
-        progress_bar = st.progress(0, text="Starting transcription...")
-        status = st.empty()
-        def update_progress(percent, message):
-            progress_bar.progress(percent, text=message)
-        ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"), on_progress=update_progress)
-        
-        #st.success("Done! Switch to Today's Log to see the result.")
-        st.cache_data.clear()  # Clear cache to ensure new entry is loaded  
+        audio = live_recording or uploaded_file
+        if audio is None:
+            st.error("Please record a voice message or upload a file first.")
+            st.stop()
+
+        tmp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                tmp.write(audio.read())
+                tmp_path = tmp.name
+
+            progress_bar = st.progress(0, text="Starting transcription...")
+            def update_progress(percent, message):
+                progress_bar.progress(percent, text=message)
+            ctrl.process_log_entry(tmp_path, entry_date.strftime("%Y-%m-%d"), on_progress=update_progress)
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+        st.cache_data.clear()  # Clear cache to ensure new entry is loaded
         st.switch_page("pages/todays_log.py")
 
     # Display today's log entry if it exists

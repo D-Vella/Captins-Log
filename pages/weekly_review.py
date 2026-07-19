@@ -19,19 +19,22 @@ date_range = st.date_input(
     )
 )
 
+@st.cache_data #no point in reloading this every time the page rerenders.
+def load_weekly_reviews():
+    return ctrl.get_weekly_reviews()
+
 if st.button("Generate this week's review"):
     if len(date_range) == 2:
         with st.spinner("Asking the LLM for a weekly summary..."):
             start_date, end_date = date_range
             summary = ctrl.weekly_review(start_date, end_date)
+        load_weekly_reviews.clear()  # the cached list is now stale — a new review exists on disk
         st.markdown(summary)
+    else:
+        st.warning("Please select both a start and an end date before generating a review.")
 
 st.divider()
 st.header("Past Weekly Reviews")
-
-@st.cache_data #no point in reloading this every time the page rerenders.
-def load_weekly_reviews():
-    return ctrl.get_weekly_reviews()
 
 reviews = load_weekly_reviews()
 if reviews:
