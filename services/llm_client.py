@@ -57,7 +57,8 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
     if format == "json":
         payload["format"] = "json"
 
-    api_response = requests.post(f'{LLM_ENDPOINT}/api/chat',json=payload)
+    api_response = requests.post(f'{LLM_ENDPOINT}/api/chat', json=payload, timeout=600)
+    api_response.raise_for_status()
 
     import json
     returnMessages = api_response.text.splitlines()
@@ -141,11 +142,13 @@ def transcription_cleanup(prompt: str, mode_choice: str = "Transcription Cleanup
     You will be given a raw transcript of a dictation from an individual who is doing analysis or investigations into a given topic. Your job is to clean up any speech to text artefacts, fix punctuation, capitalization, paragraphing and spacing issues, while preserving the speaker's voice and meaning. Additionally, you are to assist with the organization of the information to help present a useful entry that can be read back at a later date. The goal here is to provide understanding and clarity of the topic at hand to someone who has been divorced from the topic in question by a matter of days. Feel free to add some additional information where it can be ascertained from the original transcription to improve clarity of the outputted text.
 """
 
-    if mode_choice == "Transcription Cleanup":
-        system_prompt = cleanup_prompt
-    elif mode_choice == "Note Taking":
-        system_prompt = note_taking_prompt
-
+    prompts = {
+        "Transcription Cleanup": cleanup_prompt,
+        "Note Taking": note_taking_prompt,
+    }
+    if mode_choice not in prompts:
+        raise ValueError(f"Unknown processing mode: {mode_choice}")
+    system_prompt = prompts[mode_choice]
 
     cleanup_response = call_llm_api(prompt=prompt, system=system_prompt, format="markdown")
     if cleanup_response == None:
