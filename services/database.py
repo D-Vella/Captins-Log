@@ -201,7 +201,7 @@ def api_get_logs(log_id:str):
         return {'id': row[0], 'entry_date': row[1], 'created_at': str(row[2])}
 
     if len(log_id) == 0:
-        return {idx: row_to_dict(row) for idx, row in enumerate(results)}
+        return {row[1]: row_to_dict(row) for row in results}
     else:
         return row_to_dict(results)
     
@@ -255,11 +255,25 @@ def api_get_enrichments():
 
 def api_delete_log_entry(log_id:int):
     """
-    Deletes a log entry from the log_entry table based on the provided log ID.
+    Deletes a log entry and all of its child rows (segments and enrichments).
+    Children must be deleted before the parent to satisfy the foreign key constraints.
     Args:
         log_id (int): The ID of the log entry to be deleted.
     """
-    pass
+    with Session() as session:
+        session.execute(
+            text("DELETE FROM log_enrichment WHERE log_entry_id = :log_id"),
+            {"log_id": log_id}
+        )
+        session.execute(
+            text("DELETE FROM log_segment WHERE log_entry_id = :log_id"),
+            {"log_id": log_id}
+        )
+        session.execute(
+            text("DELETE FROM log_entry WHERE id = :log_id"),
+            {"log_id": log_id}
+        )
+        session.commit()
 
 def get_weekly_transcripts(start_date:date, end_date:date):
     """
@@ -273,8 +287,8 @@ def get_weekly_transcripts(start_date:date, end_date:date):
                         FROM log_entry
                         WHERE entry_date BETWEEN :start_dt AND :end_dt
                         """),
-                        {"start_dt": start_date,
-                         "end_dt": end_date}
+                        {"start_dt": start_date.isoformat(),
+                         "end_dt": end_date.isoformat()}
                 ).fetchall()
         
         for result in results:
@@ -291,7 +305,6 @@ def get_unified_transcripts(log_id:int) -> str:
     Returns:
         str: A concatenated string of all raw transcripts, separated by newlines.
     """
-    transcripts_result = ''
     with Session() as session:
         transcripts = session.execute(
                 text("""
@@ -301,9 +314,8 @@ def get_unified_transcripts(log_id:int) -> str:
                      """),
                      {"log_id": log_id}
             ).fetchall()
-            
-    for transcript in transcripts:
-        transcripts_result += transcript[2]
+
+    transcripts_result = '\n\n'.join(transcript[2] for transcript in transcripts)
     transcripts_result += '\n\n'
 
     return transcripts_result

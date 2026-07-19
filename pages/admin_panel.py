@@ -10,11 +10,9 @@ import pandas as pd
 from services.database import (
     api_get_logs,
     api_get_segments,
-    api_get_enrichments,
-    api_delete_log_entry
+    api_get_enrichments
 )
-from typing import cast
-from services.controller import check_connections, rebuild_database
+from services.controller import check_connections, rebuild_database, delete_log_entry
 
 st.info("Currently implementing.")
 
@@ -120,7 +118,7 @@ def render_entry_management(headers):
 
         with col_confirm:
             if st.button("Yes, delete it", type="primary"):
-                api_delete_log_entry(st.session_state.admin_selected_entry)
+                delete_log_entry(st.session_state.admin_selected_entry)
                 st.cache_data.clear()
                 st.session_state.admin_confirm_delete = False
                 st.session_state.admin_selected_entry = None

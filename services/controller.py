@@ -5,6 +5,7 @@ from services.config import LOGS_DIR, RECORDINGS_DIR, ensure_directories
 from services import transcriber, database, llm_client
 from datetime import date
 import os
+import shutil
 
 def get_weekly_reviews() -> dict:
     # This will return a dict of all the weekly reviews that have been generated, with the key as the week range and the value as the summary.
@@ -80,10 +81,21 @@ def process_log_entry(audio_path: str, entry_date: str, on_progress=None) -> dic
         "questions": questions
     }
 
+def delete_log_entry(entry_date: str) -> None:
+    # Deletes the database rows and the generated markdown file for a given date.
+    # The original audio recordings are deliberately kept: they are the irreplaceable
+    # source data, so a database rebuild will restore this entry from them.
+    entry_id = database.get_dated_entry_id(entry_date)
+    if entry_id is not None:
+        database.api_delete_log_entry(entry_id)
+
+    md_file = LOGS_DIR / f"{entry_date}.md"
+    if md_file.exists():
+        md_file.unlink()
+
 def save_uploaded_audio(audio_file, file_name:str) -> str:
     # This will allow the user to upload audio to the UI and it will be saved in the right place with the right name.
     # Returns True if successful
-    import shutil
 
     DESTINATION_PATH = os.path.join(RECORDINGS_DIR, file_name)
 
