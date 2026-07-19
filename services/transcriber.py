@@ -17,13 +17,13 @@ def transcribe_audio(file_path) -> tuple[str, int]:
     Raises:
         ValueError: If there's an error probing the audio file, contacting the whisper.cpp server, or if the transcription is empty.
     """
-    import ffmpeg
+    import mutagen
     try:
-        audio = ffmpeg.probe(file_path)
+        audio = mutagen.File(file_path)
     except Exception as e:
         raise ValueError(f"Error occurred while probing audio file: {e}")
 
-    audio_duration = int(float(audio['format']['duration']))
+    audio_duration = int(float(audio.info.length))
 
     try:
         with open(file_path, "rb") as f:
