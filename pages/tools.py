@@ -49,5 +49,9 @@ if st.button("Fetch Discogs Collection"):
     from services.discogs import get_discogs_collection
 
     with st.spinner("Fetching Discogs collection..."):
-        discogs_df = get_discogs_collection()
+        progressbar = st.progress(0, text="Fetching Discogs collection...")
+        def update_progress(percent, message):
+            progressbar.progress(percent, text=message)
+
+        discogs_df = get_discogs_collection(on_progress=update_progress)
     st.dataframe(discogs_df)
