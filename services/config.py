@@ -45,3 +45,5 @@ POSTGRES_CONFIG = {
     "host": os.getenv("POSTGRES_HOST"),
     "port": os.getenv("POSTGRES_PORT")
 }
+
+DISCOGS_TOKEN = os.getenv("DISCOGS_TOKEN")

@@ -42,3 +42,12 @@ if st.button("Transcribe"):
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+st.header("Discogs Collection")
+
+if st.button("Fetch Discogs Collection"):
+    from services.discogs import get_discogs_collection
+
+    with st.spinner("Fetching Discogs collection..."):
+        discogs_df = get_discogs_collection()
+    st.dataframe(discogs_df)
