@@ -40,6 +40,23 @@ def get_ollama_endpoint() -> tuple:
 
 
 def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
+    """
+    Core entry point for all Ollama LLM API calls.
+
+    Sends a prompt and system instruction to the configured Ollama endpoint.
+    Automatically falls back to the secondary endpoint if the primary is unreachable.
+
+    Args:
+        prompt: The user message content to send to the LLM.
+        system: The system instruction that guides the LLM's behavior.
+        format: The expected response format. Defaults to "json". Can also be "markdown".
+
+    Returns:
+        str: The concatenated response text from the LLM.
+
+    Raises:
+        requests.exceptions.RequestException: If the API call fails (e.g., bad response, timeout).
+    """
     import requests
     start_time = datetime.datetime.now()
     LLM_ENDPOINT, LLM_MODEL = get_ollama_endpoint()
@@ -74,6 +91,22 @@ def call_llm_api(prompt: str, system: str, format: str ="json") -> str:
     return completeMessage
 
 def llm_formatter(prompt: str) -> str:
+    """
+    Converts a raw speech-to-text transcript into a neatly formatted Markdown document.
+
+    Cleans up speech artifacts ("um", "uh", false starts), fixes punctuation,
+    capitalization, and spacing issues while preserving the speaker's voice and meaning.
+    Groups related topics together, uses headings and bullet points for readability.
+
+    Args:
+        prompt: The raw transcript text to be formatted.
+
+    Returns:
+        str: The formatted Markdown string.
+
+    Raises:
+        ValueError: If the LLM API call fails or returns an empty response.
+    """
     markdown_prompt = """
         You will be provided with a raw transcript of a diary like entry. Your job is to Convert the raw transcript into a neatly formatted markdown document. Use headings, bullet points, bold text, or any other formatting you think is appropriate to make the content easy to read and visually appealing.
 
@@ -94,6 +127,22 @@ def llm_formatter(prompt: str) -> str:
     return markdown_response
 
 def llm_question_generator(prompt: str) -> str:
+    """
+    Generates 3 open-ended follow-up questions for self-reflection based on a diary entry.
+
+    The LLM returns a JSON object with a "follow_up_questions" key containing the three
+    questions. The questions are formatted with numbered Markdown headings (e.g.,
+    "### Question 1:").
+
+    Args:
+        prompt: The diary entry text to generate questions from.
+
+    Returns:
+        str: The questions formatted with "### Question N:" headings and blank lines.
+
+    Raises:
+        ValueError: If the LLM API call fails or the response cannot be parsed as JSON.
+    """
     three_questions_prompt = """
                 You will be given a diary entry. Based on the content of the diary entry, generate a list of 3 follow up questions that the user can ask themselves to reflect deeper on the content of the diary entry. The questions should be open ended and thought provoking. They should help them to gain deeper insights and understanding about themselves based on the content of the diary entry.
         
@@ -120,6 +169,27 @@ def llm_question_generator(prompt: str) -> str:
     return question_text
 
 def weekly_review(prompt: str) ->str:
+    """
+    Generates a weekly review from a week's worth of diary entries.
+
+    The review covers the following topics:
+        - Summary of what was worked on across the week
+        - Recurring themes or blockers
+        - Outstanding actions mentioned but not resolved
+        - What went well vs. what didn't
+
+    The goal is to help the user reflect on their week, identify areas for improvement,
+    and celebrate their wins.
+
+    Args:
+        prompt: A collection of diary entries spanning one week.
+
+    Returns:
+        str: The weekly review in Markdown format.
+
+    Raises:
+        ValueError: If the LLM API call fails or returns an empty response.
+    """
     weekly_review_prompt = """
         You will be given a week's worth of diary entries. Based on the content of these entries, generate a weekly review that coverts the following topics:
             * Summarise what was worked on across the week
@@ -135,6 +205,28 @@ def weekly_review(prompt: str) ->str:
     return weekly_review_response
 
 def transcription_cleanup(prompt: str, mode_choice: str = "Transcription Cleanup") -> str:
+    """
+    Cleans up a raw transcript or transforms it into organized notes using an LLM.
+
+    Two processing modes are available:
+        - "Transcription Cleanup": Removes speech artifacts, fixes punctuation,
+          capitalization, and spacing while preserving the original content.
+        - "Note Taking": Cleans up the transcript and reorganizes the information
+          for clarity, adding context to help someone reading it later understand
+          the topic at a glance.
+
+    Args:
+        prompt: The raw transcript text to process.
+        mode_choice: The processing mode. One of "Transcription Cleanup" or
+                     "Note Taking". Defaults to "Transcription Cleanup".
+
+    Returns:
+        str: The cleaned or reorganized Markdown text.
+
+    Raises:
+        ValueError: If mode_choice is not one of the recognized modes, or if the
+                    LLM API call fails or returns an empty response.
+    """
     cleanup_prompt = """
         You will be given a raw transcript of a diary like entry. Your job is to clean up the transcript by removing any speech-to-text artefacts ("um", "uh", false starts), fixing any punctuation, capitalisation and spacing issues, while preserving the speaker's voice and meaning. The cleaned up transcript should be easy to read and accurately reflect the content of the original transcript.
     """
